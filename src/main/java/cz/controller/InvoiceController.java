@@ -9,6 +9,7 @@ import cz.repository.InvoiceRepository;
 import cz.repository.ProductRepository;
 import cz.repository.UserRepository;
 import cz.service.PlanQuotaService;
+import cz.service.QrPaymentService;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
@@ -27,17 +28,20 @@ public class InvoiceController {
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
     private final PlanQuotaService planQuotaService;
+    private final QrPaymentService qrPaymentService;
 
     public InvoiceController(InvoiceRepository invoiceRepository,
                              ClientRepository clientRepository,
                              ProductRepository productRepository,
                              UserRepository userRepository,
-                             PlanQuotaService planQuotaService) {
+                             PlanQuotaService planQuotaService,
+                             QrPaymentService qrPaymentService) {
         this.invoiceRepository = invoiceRepository;
         this.clientRepository = clientRepository;
         this.productRepository = productRepository;
         this.userRepository = userRepository;
         this.planQuotaService = planQuotaService;
+        this.qrPaymentService = qrPaymentService;
     }
 
     @GetMapping("/invoices")
@@ -119,6 +123,8 @@ public class InvoiceController {
 
         model.addAttribute("invoice", invoice);
         model.addAttribute("currentUser", currentUser);
+        model.addAttribute("paymentIban", qrPaymentService.paymentIban(invoice.getUser()));
+        model.addAttribute("qrCodeBase64", qrPaymentService.qrCodeDataUrl(invoice.getUser(), invoice));
         model.addAttribute("activePage", "invoices");
         return "invoice-detail";
     }

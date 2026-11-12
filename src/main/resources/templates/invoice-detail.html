@@ -92,8 +92,7 @@
             <div class="bg-gray-50 p-4 rounded-lg border border-gray-100">
                 <h2 class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Dodavatel</h2>
                 <p class="font-bold text-gray-900 text-base" th:text="${invoice.user.name}">Matěj Přívozník</p>
-                <p class="text-sm text-gray-600 mt-1" th:text="${invoice.user.street}">Ulice 123</p>
-                <p class="text-sm text-gray-600" th:text="${invoice.user.zipCode + ' ' + invoice.user.city}">530 02 Pardubice</p>
+                <p class="text-sm text-gray-600 mt-1" th:text="${invoice.user.address}">Masarykova 1, Hradec Králové</p>
                 <div class="mt-3 text-sm text-gray-700 space-y-0.5">
                     <p th:if="${invoice.user.ico != null}"><span class="font-medium text-gray-500">IČO:</span> <span th:text="${invoice.user.ico}">12345678</span></p>
                     <p th:if="${invoice.user.vatNumber != null}"><span class="font-medium text-gray-500">DIČ:</span> <span th:text="${invoice.user.vatNumber}">CZ12345678</span></p>
@@ -117,7 +116,7 @@
             <div class="space-y-1.5 text-sm">
                 <p class="flex justify-between"><span class="text-gray-500">Způsob úhrady:</span> <span class="font-medium text-gray-900" th:text="${invoice.paymentMethod != null ? invoice.paymentMethod : 'Bankovní převod'}">Bankovní převod</span></p>
                 <p class="flex justify-between" th:if="${invoice.user.bankAccount != null}"><span class="text-gray-500">Číslo účtu:</span> <span class="font-medium text-gray-900" th:text="${invoice.user.bankAccount}">123456789/0100</span></p>
-                <p class="flex justify-between" th:if="${invoice.user.iban != null}"><span class="text-gray-500">IBAN:</span> <span class="font-mono font-medium text-gray-900" th:text="${invoice.user.iban}">CZ6501000000000123456789</span></p>
+                <p class="flex justify-between" th:if="${paymentIban != null}"><span class="text-gray-500">IBAN:</span> <span class="font-mono font-medium text-gray-900" th:text="${paymentIban}">CZ1801000000000123456789</span></p>
                 <p class="flex justify-between" th:if="${invoice.user.swift != null}"><span class="text-gray-500">SWIFT / BIC:</span> <span class="font-mono text-gray-900" th:text="${invoice.user.swift}">KOMBCZPPXXX</span></p>
                 <p class="flex justify-between" th:if="${invoice.constantSymbol != null}"><span class="text-gray-500">Konstantní symbol:</span> <span class="font-medium text-gray-900" th:text="${invoice.constantSymbol}">0308</span></p>
             </div>
@@ -159,24 +158,17 @@
 
             <!-- QR PLATBA BLOK -->
             <div class="flex flex-col items-start">
-                <div th:if="${invoice.user.iban != null and not #strings.isEmpty(invoice.user.iban)}"
+                <div th:if="${qrCodeBase64 != null}"
                      class="p-3 bg-white border border-gray-200 rounded-xl shadow-sm text-center inline-block">
                     <span class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-2">QR Platba</span>
-
-                    <!-- Použití backendového Base64 kódu (pokud je připraven v controlleru) -->
-                    <img th:if="${qrCodeBase64 != null}"
-                         th:src="${qrCodeBase64}"
+                    <img th:src="${qrCodeBase64}"
                          alt="QR Platba"
                          class="w-36 h-36 mx-auto rounded border border-gray-100" />
-
-                    <!-- Záložní dynamické API generování přes Paylibo (pokud controller neposílá Base64) -->
-                    <img th:if="${qrCodeBase64 == null}"
-                         th:src="@{'https://api.paylibo.com/api/v1/spay/sq/generator/iban/' + ${#strings.replace(invoice.user.iban, ' ', '')} + '/amount/' + ${#numbers.formatDecimal(invoice.grossTotal, 1, 2, 'POINT')} + '/currency/CZK' + (${invoice.variableSymbol != null} ? '?vs=' + ${invoice.variableSymbol} : '')}"
-                         alt="QR Platba"
-                         class="w-36 h-36 mx-auto rounded border border-gray-100" />
-
                     <span class="block text-[10px] text-gray-400 mt-1.5">Naskenujte v mobilním bankovnictví</span>
                 </div>
+                <p th:if="${qrCodeBase64 == null}" class="text-sm text-gray-500">
+                    QR platbu nelze vytvořit. V nastavení doplňte číslo účtu ve tvaru 123456789/0100.
+                </p>
             </div>
 
             <!-- Souhrn cen -->
