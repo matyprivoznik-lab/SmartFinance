@@ -8,13 +8,18 @@ import cz.repository.ClientRepository;
 import cz.repository.InvoiceRepository;
 import cz.repository.ProductRepository;
 import cz.repository.UserRepository;
+import cz.service.DataRightsService;
 import cz.service.PlanQuotaService;
 import cz.service.QrPaymentService;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
@@ -29,19 +34,22 @@ public class InvoiceController {
     private final UserRepository userRepository;
     private final PlanQuotaService planQuotaService;
     private final QrPaymentService qrPaymentService;
+    private final DataRightsService dataRightsService;
 
     public InvoiceController(InvoiceRepository invoiceRepository,
                              ClientRepository clientRepository,
                              ProductRepository productRepository,
                              UserRepository userRepository,
                              PlanQuotaService planQuotaService,
-                             QrPaymentService qrPaymentService) {
+                             QrPaymentService qrPaymentService,
+                             DataRightsService dataRightsService) {
         this.invoiceRepository = invoiceRepository;
         this.clientRepository = clientRepository;
         this.productRepository = productRepository;
         this.userRepository = userRepository;
         this.planQuotaService = planQuotaService;
         this.qrPaymentService = qrPaymentService;
+        this.dataRightsService = dataRightsService;
     }
 
     @GetMapping("/invoices")
@@ -218,6 +226,51 @@ public class InvoiceController {
         }
 
         return "redirect:/invoices";
+    }
+
+    @GetMapping("/invoices/export")
+    public ResponseEntity<byte[]> exportInvoices(@AuthenticationPrincipal UserDetails userDetails) {
+        User currentUser = currentUser(userDetails);
+        if (currentUser == null) {
+            return ResponseEntity.status(401).build();
+        }
+        byte[] body = dataRightsService.exportInvoices(currentUser);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"minifaktura-faktury.json\"")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(body);
+    }
+
+    @PostMapping("/invoices/import")
+    public String importInvoices(@RequestParam("file") MultipartFile file,
+                                 @RequestParam(value = "next", defaultValue = "invoices") String next,
+                                 @AuthenticationPrincipal UserDetails userDetails,
+                                 RedirectAttributes redirectAttributes) {
+        String target = "settings".equals(next) ? "redirect:/settings" : "redirect:/invoices";
+        User currentUser = currentUser(userDetails);
+        if (currentUser == null) {
+            return "redirect:/login";
+        }
+        if (file == null || file.isEmpty()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Vyberte JSON soubor s fakturami.");
+            return target;
+        }
+        try {
+            DataRightsService.ImportResult result = dataRightsService.importInvoices(currentUser, file.getBytes());
+            redirectAttributes.addFlashAttribute("successMessage", result.message());
+        } catch (IllegalArgumentException ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Import se nepodařil. Zkontrolujte, že jde o export z MiniFaktury.");
+        }
+        return target;
+    }
+
+    private User currentUser(UserDetails userDetails) {
+        if (userDetails == null) {
+            return null;
+        }
+        return userRepository.findByEmail(userDetails.getUsername()).orElse(null);
     }
 
     private static double roundMoney(double value) {

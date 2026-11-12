@@ -25,6 +25,24 @@
             </a>
         </div>
 
+        <div th:if="${successMessage}" class="bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm p-4 rounded-xl font-medium" th:text="${successMessage}"></div>
+        <div th:if="${errorMessage}" class="bg-rose-50 border border-rose-200 text-rose-800 text-sm p-4 rounded-xl font-medium" th:text="${errorMessage}"></div>
+
+        <section class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-5 space-y-3">
+            <div>
+                <h2 class="text-sm font-bold text-slate-900">Odnést nebo vrátit faktury</h2>
+                <p class="text-xs text-slate-500 mt-1">JSON export obsahuje doklady, odběratele a položky. Stejný soubor jde naimportovat, když měníš službu nebo se vracíš. Faktury s datem vystavení v tomto měsíci se počítají do limitu Free plánu.</p>
+            </div>
+            <div class="flex flex-col lg:flex-row lg:items-center gap-3">
+                <a href="/invoices/export" class="inline-flex justify-center px-4 py-2 bg-slate-900 text-white text-sm font-semibold rounded-xl">Stáhnout faktury (JSON)</a>
+                <form th:action="@{/invoices/import}" method="post" enctype="multipart/form-data" class="flex flex-col sm:flex-row gap-2 sm:items-center">
+                    <input type="hidden" name="next" value="invoices">
+                    <input type="file" name="file" accept="application/json,.json" required class="text-sm text-slate-600">
+                    <button type="submit" class="px-4 py-2 bg-white border border-slate-300 text-slate-800 text-sm font-semibold rounded-xl">Importovat</button>
+                </form>
+            </div>
+        </section>
+
         <div th:if="${!isPro}" class="quota-banner">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
                 <p class="text-sm font-semibold text-slate-800">
