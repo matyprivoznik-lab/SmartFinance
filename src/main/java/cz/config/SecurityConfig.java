@@ -1,6 +1,5 @@
 package cz.config;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -16,9 +15,6 @@ import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWrite
 public class SecurityConfig {
 
     private final CustomAuthenticationSuccessHandler customAuthenticationSuccessHandler;
-
-    @Value("${app.security.h2-console-enabled:false}")
-    private boolean h2ConsoleEnabled;
 
     public SecurityConfig(CustomAuthenticationSuccessHandler customAuthenticationSuccessHandler) {
         this.customAuthenticationSuccessHandler = customAuthenticationSuccessHandler;
@@ -41,9 +37,6 @@ public class SecurityConfig {
                             "/billing/webhook",
                             "/error"
                     ).permitAll();
-                    if (h2ConsoleEnabled) {
-                        auth.requestMatchers("/h2-console/**").authenticated();
-                    }
                     auth.anyRequest().authenticated();
                 })
                 .formLogin(form -> form
@@ -60,23 +53,12 @@ public class SecurityConfig {
                         .deleteCookies("JSESSIONID")
                         .permitAll()
                 )
-                .csrf(csrf -> {
-                    csrf.ignoringRequestMatchers("/billing/webhook");
-                    if (h2ConsoleEnabled) {
-                        csrf.ignoringRequestMatchers("/h2-console/**");
-                    }
-                })
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/billing/webhook"))
                 .headers(headers -> {
                     headers.contentTypeOptions(Customizer.withDefaults());
                     headers.xssProtection(Customizer.withDefaults());
                     headers.referrerPolicy(r -> r.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN));
-                    headers.frameOptions(frame -> {
-                        if (h2ConsoleEnabled) {
-                            frame.sameOrigin();
-                        } else {
-                            frame.deny();
-                        }
-                    });
+                    headers.frameOptions(frame -> frame.deny());
                 });
 
         return http.build();
