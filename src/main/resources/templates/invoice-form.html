@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="cs">
+<head>
+    <title>MiniFaktura - Vystavit fakturu</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body class="bg-slate-50 font-sans leading-normal tracking-normal min-h-screen flex flex-col">
+
+<div th:replace="~{fragments/header :: main-header}"></div>
+
+<!-- Hlavní obsah -->
+<main class="container mx-auto px-4 sm:px-6 py-8 flex-grow flex flex-col items-center">
+    <div class="max-w-4xl w-full bg-white p-5 sm:p-10 rounded-2xl shadow-sm border border-slate-200">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6 sm:mb-8 border-b border-slate-200 pb-4">
+            <div>
+                <h1 class="text-xl sm:text-2xl font-black text-slate-900">Nová faktura</h1>
+                <p class="text-xs text-slate-500 mt-0.5">Vystavení daňového dokladu s napojením na sklad</p>
+            </div>
+            <a href="/invoices" class="text-xs sm:text-sm font-semibold text-blue-600 hover:underline">&larr; Zpět na seznam faktur</a>
+        </div>
+
+        <form th:action="@{/invoices/save}" th:object="${invoice}" method="post" class="space-y-6">
+
+            <!-- Základní údaje -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-slate-50 p-4 sm:p-5 rounded-xl border border-slate-200 text-xs sm:text-sm">
+                <div>
+                    <label class="block font-bold uppercase tracking-wider text-slate-500 mb-1">Číslo faktury</label>
+                    <input type="text" th:field="*{invoiceNumber}" required
+                           class="w-full px-3 sm:px-4 py-2.5 border border-slate-300 bg-white rounded-xl focus:ring-2 focus:ring-blue-600 font-semibold text-slate-900">
+                </div>
+                <div>
+                    <label class="block font-bold uppercase tracking-wider text-slate-500 mb-1">Variabilní symbol</label>
+                    <input type="text" th:field="*{variableSymbol}" required
+                           class="w-full px-3 sm:px-4 py-2.5 border border-slate-300 bg-white rounded-xl focus:ring-2 focus:ring-blue-600 font-semibold text-slate-900">
+                </div>
+                <div>
+                    <label class="block font-bold uppercase tracking-wider text-slate-500 mb-1">Datum vystavení</label>
+                    <input type="date" th:field="*{issueDate}" required
+                           class="w-full px-3 sm:px-4 py-2.5 border border-slate-300 bg-white rounded-xl focus:ring-2 focus:ring-blue-600 font-semibold text-slate-900">
+                </div>
+            </div>
+
+            <!-- Odběratel -->
+            <div class="bg-slate-50 p-4 sm:p-5 rounded-xl border border-slate-200 space-y-4 text-xs sm:text-sm">
+                <div class="flex justify-between items-center">
+                    <h3 class="font-bold text-slate-900 text-xs sm:text-sm uppercase tracking-wider">Odběratel (Zákazník)</h3>
+                    <a href="/clients" target="_blank" class="text-xs text-blue-600 font-semibold hover:underline">+ Spravovat adresář</a>
+                </div>
+
+                <div>
+                    <label class="block font-medium text-slate-500 mb-1">Rychle vybrat z adresáře</label>
+                    <select id="clientSelect" name="clientId" class="w-full px-3 sm:px-4 py-2.5 border border-slate-300 bg-white rounded-xl">
+                        <option value="">-- Zadejte jméno nebo vyberte z adresáře --</option>
+                        <option th:each="c : ${clients}"
+                                th:value="${c.id}"
+                                th:text="${c.name}"
+                                th:data-name="${c.name}"
+                                th:data-ico="${c.ico}"
+                                th:data-address="${c.address}"
+                                th:data-email="${c.email}"
+                                th:data-phone="${c.phone}"></option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block font-medium text-slate-500 mb-1">Název firmy / Jméno</label>
+                    <input type="text" id="clientName" th:field="*{client.name}" required placeholder="Zadejte jméno nebo vyberte výše" class="w-full px-3 sm:px-4 py-2.5 border border-slate-300 bg-white rounded-xl">
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block font-medium text-slate-500 mb-1">IČO odběratele</label>
+                        <input type="text" id="clientIco" th:field="*{client.ico}" class="w-full px-3 sm:px-4 py-2.5 border border-slate-300 bg-white rounded-xl">
+                    </div>
+                    <div>
+                        <label class="block font-medium text-slate-500 mb-1">Adresa</label>
+                        <input type="text" id="clientAddress" th:field="*{client.address}" required class="w-full px-3 sm:px-4 py-2.5 border border-slate-300 bg-white rounded-xl">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-200">
+                    <div>
+                        <label class="block font-medium text-slate-500 mb-1">E-mail</label>
+                        <input type="email" id="clientEmail" th:field="*{client.email}" class="w-full px-3 sm:px-4 py-2.5 border border-slate-300 bg-white rounded-xl">
+                    </div>
+                    <div>
+                        <label class="block font-medium text-slate-500 mb-1">Telefon</label>
+                        <input type="text" id="clientPhone" th:field="*{client.phone}" class="w-full px-3 sm:px-4 py-2.5 border border-slate-300 bg-white rounded-xl">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Položky faktury & Sklad -->
+            <div class="bg-slate-50 p-4 sm:p-5 rounded-xl border border-slate-200 space-y-4 text-xs sm:text-sm">
+                <div class="flex justify-between items-center">
+                    <h3 class="font-bold text-slate-900 text-xs sm:text-sm uppercase tracking-wider">Položky faktury</h3>
+                    <a href="/products" target="_blank" class="text-xs text-blue-600 font-semibold hover:underline">+ Spravovat sklad</a>
+                </div>
+
+                <div id="items-container" class="space-y-4">
+                    <div class="item-row bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
+
+                        <div>
+                            <label class="block font-medium text-slate-500 mb-1">📦 Vybrat ze skladu (volitelné)</label>
+                            <select onchange="fillProductFromStock(this)" class="product-select w-full px-3 py-2 border border-slate-300 rounded-lg bg-slate-50">
+                                <option value="">-- Volná položka (nebo vybrat ze skladu) --</option>
+                                <option th:each="p : ${products}"
+                                        th:value="${p.id}"
+                                        th:text="${p.name + (p.unitPriceGross != null ? ' (' + p.unitPriceGross + ' Kč vč. DPH)' : '')}"
+                                        th:data-id="${p.id}"
+                                        th:data-name="${p.name}"
+                                        th:data-unit-price-gross="${p.unitPriceGross}"></option>
+                            </select>
+                            <input type="hidden" name="items[0].productId" class="item-product-id">
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+                            <div class="sm:col-span-4">
+                                <label class="block font-medium text-slate-500 mb-1">Popis položky / Služby</label>
+                                <input type="text" name="items[0].description" placeholder="Zadejte název nebo vyberte ze skladu výše" required
+                                       class="item-desc w-full px-3 py-2 border border-slate-300 rounded-lg">
+                            </div>
+                            <div class="sm:col-span-2">
+                                <label class="block font-medium text-slate-500 mb-1">Množství</label>
+                                <input type="number" name="items[0].quantity" value="1" min="0.01" step="0.01" required
+                                       class="item-qty w-full px-3 py-2 border border-slate-300 rounded-lg" oninput="recalcTotals()">
+                            </div>
+                            <div class="sm:col-span-3">
+                                <label class="block font-medium text-slate-500 mb-1">Cena / j. vč. DPH (Kč)</label>
+                                <input type="number" step="0.01" name="items[0].unitPriceGross" placeholder="0.00" required
+                                       class="item-price w-full px-3 py-2 border border-slate-300 rounded-lg" oninput="recalcTotals()">
+                            </div>
+                            <div class="sm:col-span-2">
+                                <label class="block font-medium text-slate-500 mb-1">Sazba DPH</label>
+                                <select name="items[0].vatRate" class="item-vat w-full px-3 py-2 border border-slate-300 rounded-lg bg-white" onchange="recalcTotals()">
+                                    <option value="21" selected>21 %</option>
+                                    <option value="12">12 %</option>
+                                    <option value="0">0 %</option>
+                                </select>
+                            </div>
+                            <div class="sm:col-span-1 flex justify-between items-center pt-2">
+                                <button type="button" onclick="removeItem(this)" class="text-slate-400 hover:text-rose-600 transition font-bold">×</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="button" onclick="addItem()" class="mt-2 text-xs sm:text-sm text-blue-600 font-bold hover:underline transition flex items-center gap-1.5">
+                    + Přidat další položku
+                </button>
+
+                <div class="bg-white border border-slate-200 rounded-xl p-4 space-y-1.5 text-sm">
+                    <p class="text-xs text-slate-500 mb-2">Cenu zadáváš včetně DPH. Základ daně a DPH se z ní dopočítají.</p>
+                    <div class="flex justify-between text-slate-600">
+                        <span>Základ bez DPH</span>
+                        <span id="preview-net" class="font-semibold">0,00 Kč</span>
+                    </div>
+                    <div class="flex justify-between text-slate-600">
+                        <span>DPH</span>
+                        <span id="preview-vat" class="font-semibold">0,00 Kč</span>
+                    </div>
+                    <div class="flex justify-between text-slate-900 font-black pt-1 border-t border-slate-200">
+                        <span>Celkem k úhradě</span>
+                        <span id="preview-gross">0,00 Kč</span>
+                    </div>
+                </div>
+            </div>
+
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            <button type="submit" class="w-full btn-primary py-3.5 shadow-lg transition text-sm sm:text-base">
+                Vystavit fakturu a uložit
+            </button>
+        </form>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: main-footer}"></div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const clientSelect = document.getElementById('clientSelect');
+        if (clientSelect) {
+            clientSelect.addEventListener('change', function() {
+                const option = this.options[this.selectedIndex];
+                document.getElementById('clientName').value = option.dataset.name || '';
+                document.getElementById('clientIco').value = option.dataset.ico || '';
+                document.getElementById('clientAddress').value = option.dataset.address || '';
+                document.getElementById('clientEmail').value = option.dataset.email || '';
+                document.getElementById('clientPhone').value = option.dataset.phone || '';
+            });
+        }
+        recalcTotals();
+    });
+
+    function fillProductFromStock(select) {
+        const option = select.options[select.selectedIndex];
+        const row = select.closest('.item-row');
+
+        if (option.value) {
+            const productIdInput = row.querySelector('.item-product-id');
+            if (productIdInput) productIdInput.value = option.dataset.id || '';
+
+            row.querySelector('.item-desc').value = option.dataset.name || '';
+            row.querySelector('.item-price').value = option.dataset.unitPriceGross || '';
+            recalcTotals();
+        }
+    }
+
+    function roundMoney(value) {
+        return Math.round(value * 100) / 100;
+    }
+
+    function formatKc(value) {
+        return value.toLocaleString('cs-CZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' Kč';
+    }
+
+    function recalcTotals() {
+        let net = 0;
+        let gross = 0;
+        document.querySelectorAll('.item-row').forEach(function (row) {
+            const qty = parseFloat(row.querySelector('.item-qty')?.value) || 0;
+            const price = parseFloat(row.querySelector('.item-price')?.value) || 0;
+            const rate = parseFloat(row.querySelector('.item-vat')?.value) || 0;
+            const lineGross = roundMoney(qty * price);
+            const lineNet = rate <= 0 ? lineGross : roundMoney(lineGross / (1 + rate / 100));
+            net += lineNet;
+            gross += lineGross;
+        });
+        net = roundMoney(net);
+        gross = roundMoney(gross);
+        const vat = roundMoney(gross - net);
+        const netEl = document.getElementById('preview-net');
+        const vatEl = document.getElementById('preview-vat');
+        const grossEl = document.getElementById('preview-gross');
+        if (netEl) netEl.textContent = formatKc(net);
+        if (vatEl) vatEl.textContent = formatKc(vat);
+        if (grossEl) grossEl.textContent = formatKc(gross);
+    }
+
+    let itemCount = 1;
+    function addItem() {
+        const container = document.getElementById('items-container');
+        const firstProductSelect = document.querySelector('.product-select');
+        let productOptionsHtml = '<option value="">-- Volná položka (nebo vybrat ze skladu) --</option>';
+        if (firstProductSelect) {
+            productOptionsHtml = firstProductSelect.innerHTML;
+        }
+
+        const row = document.createElement('div');
+        row.className = 'item-row bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3';
+        row.innerHTML = `
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1">📦 Vybrat ze skladu (volitelné)</label>
+                    <select onchange="fillProductFromStock(this)" class="product-select w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-slate-50">
+                        ${productOptionsHtml}
+                    </select>
+                    <input type="hidden" name="items[${itemCount}].productId" class="item-product-id">
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+                    <div class="sm:col-span-4">
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Popis položky / Služby</label>
+                        <input type="text" name="items[${itemCount}].description" placeholder="Zadejte název položky" required
+                               class="item-desc w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Množství</label>
+                        <input type="number" name="items[${itemCount}].quantity" value="1" min="0.01" step="0.01" required
+                               class="item-qty w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" oninput="recalcTotals()">
+                    </div>
+                    <div class="sm:col-span-3">
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Cena / j. vč. DPH (Kč)</label>
+                        <input type="number" step="0.01" name="items[${itemCount}].unitPriceGross" placeholder="0.00" required
+                               class="item-price w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" oninput="recalcTotals()">
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Sazba DPH</label>
+                        <select name="items[${itemCount}].vatRate" class="item-vat w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white" onchange="recalcTotals()">
+                            <option value="21" selected>21 %</option>
+                            <option value="12">12 %</option>
+                            <option value="0">0 %</option>
+                        </select>
+                    </div>
+                    <div class="sm:col-span-1 flex justify-between items-center pt-2">
+                        <button type="button" onclick="removeItem(this)" class="text-slate-400 hover:text-rose-600 transition font-bold text-sm">×</button>
+                    </div>
+                </div>
+            `;
+        container.appendChild(row);
+        itemCount++;
+        recalcTotals();
+    }
+
+    function removeItem(btn) {
+        const rows = document.getElementsByClassName('item-row');
+        if (rows.length > 1) {
+            btn.closest('.item-row').remove();
+            recalcTotals();
+        } else {
+            alert('Faktura musí obsahovat alespoň jednu položku.');
+        }
+    }
+</script>
+</body>
+</html>

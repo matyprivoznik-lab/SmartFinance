@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="'Faktura ' + ${invoice.invoiceNumber}">Faktura VF-2026001</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            body {
+                background-color: #fff !important;
+                color: #000 !important;
+            }
+            .print-shadow-none {
+                box-shadow: none !important;
+                border: 1px solid #e5e7eb !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen text-gray-800 font-sans antialiased">
+
+<!-- Hlavní navigace / Header (nekreslí se při tisku) -->
+<div class="no-print mb-6">
+    <div th:replace="~{fragments/header :: main-header}"></div>
+</div>
+
+<main class="max-w-4xl mx-auto px-4 py-6">
+
+    <!-- Ovládací lišta (Zpět, Tisk, Stáhnout PDF) -->
+    <div class="no-print flex flex-wrap justify-between items-center mb-6 gap-3">
+        <a th:href="@{/invoices}"
+           class="inline-flex items-center text-sm font-medium text-gray-600 hover:text-gray-900 transition">
+            <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+            Zpět na seznam faktur
+        </a>
+
+        <div class="flex items-center space-x-3">
+            <button onclick="window.print()"
+                    class="px-4 py-2 bg-gray-600 text-white text-sm font-semibold rounded-lg shadow-sm hover:bg-gray-700 transition flex items-center">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                </svg>
+                Vytisknout
+            </button>
+            <a th:href="@{/invoices/{id}/pdf(id=${invoice.id})}"
+               class="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg shadow-sm hover:bg-blue-700 transition flex items-center">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                Stáhnout PDF
+            </a>
+        </div>
+    </div>
+
+    <!-- KARTA FAKTURY -->
+    <div class="bg-white rounded-xl shadow-lg print-shadow-none p-8 border border-gray-100">
+
+        <!-- Hlavička faktury -->
+        <div class="flex justify-between items-start border-b border-gray-200 pb-6 mb-6">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 tracking-tight"
+                    th:text="'FAKTURA - DAŇOVÝ DOKLAD č. ' + ${invoice.invoiceNumber}">
+                    FAKTURA č. 20260001
+                </h1>
+                <p class="text-sm text-gray-500 mt-1"
+                   th:if="${invoice.variableSymbol != null}"
+                   th:text="'Variabilní symbol: ' + ${invoice.variableSymbol}">
+                    Variabilní symbol: 20260001
+                </p>
+            </div>
+            <div class="text-right">
+                    <span th:if="${invoice.status != null}"
+                          th:classappend="${invoice.status.name() == 'PAID' ? 'bg-green-100 text-green-800' : (invoice.status.name() == 'OVERDUE' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800')}"
+                          class="inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider no-print"
+                          th:text="${invoice.status}">
+                        Zaplaceno
+                    </span>
+            </div>
+        </div>
+
+        <!-- Dodavatel & Odběratel -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+
+            <!-- Dodavatel -->
+            <div class="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                <h2 class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Dodavatel</h2>
+                <p class="font-bold text-gray-900 text-base" th:text="${invoice.user.name}">Matěj Přívozník</p>
+                <p class="text-sm text-gray-600 mt-1" th:text="${invoice.user.street}">Ulice 123</p>
+                <p class="text-sm text-gray-600" th:text="${invoice.user.zipCode + ' ' + invoice.user.city}">530 02 Pardubice</p>
+                <div class="mt-3 text-sm text-gray-700 space-y-0.5">
+                    <p th:if="${invoice.user.ico != null}"><span class="font-medium text-gray-500">IČO:</span> <span th:text="${invoice.user.ico}">12345678</span></p>
+                    <p th:if="${invoice.user.vatNumber != null}"><span class="font-medium text-gray-500">DIČ:</span> <span th:text="${invoice.user.vatNumber}">CZ12345678</span></p>
+                </div>
+            </div>
+
+            <!-- Odběratel -->
+            <div class="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                <h2 class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Odběratel</h2>
+                <p class="font-bold text-gray-900 text-base" th:text="${invoice.client.name}">Firma s.r.o.</p>
+                <p class="text-sm text-gray-600 mt-1" th:text="${invoice.client.address}">500 02 Hradec Králové</p>
+                <div class="mt-3 text-sm text-gray-700 space-y-0.5">
+                    <p th:if="${invoice.client.ico != null}"><span class="font-medium text-gray-500">IČO:</span> <span th:text="${invoice.client.ico}">87654321</span></p>
+                    <p th:if="${invoice.client.vatNumber != null}"><span class="font-medium text-gray-500">DIČ:</span> <span th:text="${invoice.client.vatNumber}">CZ87654321</span></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Platební údaje a Termíny -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 pb-6 border-b border-gray-200">
+            <div class="space-y-1.5 text-sm">
+                <p class="flex justify-between"><span class="text-gray-500">Způsob úhrady:</span> <span class="font-medium text-gray-900" th:text="${invoice.paymentMethod != null ? invoice.paymentMethod : 'Bankovní převod'}">Bankovní převod</span></p>
+                <p class="flex justify-between" th:if="${invoice.user.bankAccount != null}"><span class="text-gray-500">Číslo účtu:</span> <span class="font-medium text-gray-900" th:text="${invoice.user.bankAccount}">123456789/0100</span></p>
+                <p class="flex justify-between" th:if="${invoice.user.iban != null}"><span class="text-gray-500">IBAN:</span> <span class="font-mono font-medium text-gray-900" th:text="${invoice.user.iban}">CZ6501000000000123456789</span></p>
+                <p class="flex justify-between" th:if="${invoice.user.swift != null}"><span class="text-gray-500">SWIFT / BIC:</span> <span class="font-mono text-gray-900" th:text="${invoice.user.swift}">KOMBCZPPXXX</span></p>
+                <p class="flex justify-between" th:if="${invoice.constantSymbol != null}"><span class="text-gray-500">Konstantní symbol:</span> <span class="font-medium text-gray-900" th:text="${invoice.constantSymbol}">0308</span></p>
+            </div>
+            <div class="space-y-1.5 text-sm">
+                <p class="flex justify-between"><span class="text-gray-500">Datum vystavení:</span> <span class="font-medium text-gray-900" th:text="${#temporals.format(invoice.issueDate, 'dd.MM.yyyy')}">01.11.2026</span></p>
+                <p class="flex justify-between"><span class="text-gray-500">Datum zdanitelného plnění (DUZP):</span> <span class="font-medium text-gray-900" th:text="${#temporals.format(invoice.taxableSupplyDate != null ? invoice.taxableSupplyDate : invoice.issueDate, 'dd.MM.yyyy')}">01.11.2026</span></p>
+                <p class="flex justify-between"><span class="text-gray-500">Datum splatnosti:</span> <span class="font-bold text-gray-900" th:text="${#temporals.format(invoice.dueDate, 'dd.MM.yyyy')}">15.11.2026</span></p>
+            </div>
+        </div>
+
+        <!-- Tabulka položek -->
+        <div class="overflow-x-auto mb-8">
+            <table class="w-full text-left text-sm">
+                <thead>
+                <tr class="border-b-2 border-gray-200 text-gray-500 uppercase text-xs tracking-wider">
+                    <th class="py-3 px-2">Popis položky</th>
+                    <th class="py-3 px-2 text-right">Množství</th>
+                    <th class="py-3 px-2 text-right">Cena / ks</th>
+                    <th class="py-3 px-2 text-right" th:if="${#lists.size(invoice.items.?[vatRate != null and vatRate > 0]) > 0}">DPH %</th>
+                    <th class="py-3 px-2 text-right">Celkem</th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                <tr th:each="item : ${invoice.items}">
+                    <td class="py-3.5 px-2 font-medium text-gray-900" th:text="${item.description}">Vývoj webové aplikace</td>
+                    <td class="py-3.5 px-2 text-right text-gray-600" th:text="${item.quantity}">1</td>
+                    <td class="py-3.5 px-2 text-right text-gray-600" th:text="${#numbers.formatDecimal(item.unitPriceGross, 1, 'WHITESPACE', 2, 'POINT') + ' Kč'}">15 000.00 Kč</td>
+                    <td class="py-3.5 px-2 text-right text-gray-600" th:if="${#lists.size(invoice.items.?[vatRate != null and vatRate > 0]) > 0}">
+                        <span th:if="${item.vatRate != null and item.vatRate > 0}" th:text="${item.vatRate + ' %'}">21 %</span>
+                    </td>
+                    <td class="py-3.5 px-2 text-right font-medium text-gray-900" th:text="${#numbers.formatDecimal(item.lineGrossTotal != null ? item.lineGrossTotal : (item.quantity * item.unitPriceGross), 1, 'WHITESPACE', 2, 'POINT') + ' Kč'}">15 000.00 Kč</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Spodní sekce: QR Platba + Rekapitulace Ceny -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-end pt-4 border-t border-gray-200">
+
+            <!-- QR PLATBA BLOK -->
+            <div class="flex flex-col items-start">
+                <div th:if="${invoice.user.iban != null and not #strings.isEmpty(invoice.user.iban)}"
+                     class="p-3 bg-white border border-gray-200 rounded-xl shadow-sm text-center inline-block">
+                    <span class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-2">QR Platba</span>
+
+                    <!-- Použití backendového Base64 kódu (pokud je připraven v controlleru) -->
+                    <img th:if="${qrCodeBase64 != null}"
+                         th:src="${qrCodeBase64}"
+                         alt="QR Platba"
+                         class="w-36 h-36 mx-auto rounded border border-gray-100" />
+
+                    <!-- Záložní dynamické API generování přes Paylibo (pokud controller neposílá Base64) -->
+                    <img th:if="${qrCodeBase64 == null}"
+                         th:src="@{'https://api.paylibo.com/api/v1/spay/sq/generator/iban/' + ${#strings.replace(invoice.user.iban, ' ', '')} + '/amount/' + ${#numbers.formatDecimal(invoice.grossTotal, 1, 2, 'POINT')} + '/currency/CZK' + (${invoice.variableSymbol != null} ? '?vs=' + ${invoice.variableSymbol} : '')}"
+                         alt="QR Platba"
+                         class="w-36 h-36 mx-auto rounded border border-gray-100" />
+
+                    <span class="block text-[10px] text-gray-400 mt-1.5">Naskenujte v mobilním bankovnictví</span>
+                </div>
+            </div>
+
+            <!-- Souhrn cen -->
+            <div class="space-y-2 text-right">
+                <div class="flex justify-between text-sm text-gray-600" th:if="${invoice.netAmount != null}">
+                    <span>Základ daně:</span>
+                    <span th:text="${#numbers.formatDecimal(invoice.netAmount, 1, 'WHITESPACE', 2, 'POINT') + ' Kč'}">15 000.00 Kč</span>
+                </div>
+                <div class="flex justify-between text-sm text-gray-600" th:if="${invoice.vatAmount != null and invoice.vatAmount > 0}">
+                    <span>DPH:</span>
+                    <span th:text="${#numbers.formatDecimal(invoice.vatAmount, 1, 'WHITESPACE', 2, 'POINT') + ' Kč'}">3 150.00 Kč</span>
+                </div>
+                <div class="flex justify-between items-center text-lg font-bold text-gray-900 pt-3 border-t border-gray-200">
+                    <span>Celkem k úhradě:</span>
+                    <span class="text-2xl text-blue-700" th:text="${#numbers.formatDecimal(invoice.grossTotal, 1, 'WHITESPACE', 2, 'POINT') + ' Kč'}">15 000.00 Kč</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Patka faktury -->
+        <div class="mt-12 pt-6 border-t border-gray-100 text-center text-xs text-gray-400">
+            <p>Faktura slouží zároveň jako dodací list. Děkujeme za spolupráci.</p>
+            <p class="mt-1" th:if="${invoice.user.note != null}" th:text="${invoice.user.note}">Fyzická osoba zapsaná v živnostenském rejstříku.</p>
+        </div>
+
+    </div>
+</main>
+
+</body>
+</html>

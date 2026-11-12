@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="cs">
+<head>
+    <title>MiniFaktura - Seznam faktur</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body class="font-sans leading-normal tracking-normal min-h-screen flex flex-col">
+
+<div th:replace="~{fragments/header :: main-header}"></div>
+
+<!-- Hlavní obsah -->
+<main class="container mx-auto px-4 sm:px-6 py-8 flex-grow">
+    <div class="max-w-6xl mx-auto space-y-6">
+
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+                <h1 class="text-2xl font-black text-slate-900">Vystavené faktury</h1>
+                <p class="text-sm text-slate-500 mt-1">Přehled všech tvých vystavených daňových dokladů</p>
+            </div>
+            <a href="/invoices/new" class="btn-primary py-2.5 px-5 shadow-lg text-sm">
+                + Vystavit novou fakturu
+            </a>
+        </div>
+
+        <div th:if="${!isPro}" class="quota-banner">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
+                <p class="text-sm font-semibold text-slate-800">
+                    Free plán:
+                    <span th:text="${invoiceQuotaUsed}">0</span>/<span th:text="${invoiceQuotaLimit}">5</span>
+                    faktur tento měsíc
+                </p>
+                <a href="/billing" class="text-xs font-bold text-[var(--primary-hover)] hover:underline">Upgradovat na Pro →</a>
+            </div>
+            <div class="quota-bar">
+                <span th:style="'width:' + (${invoiceQuotaLimit} == 0 ? 0 : (${invoiceQuotaUsed} * 100.0 / ${invoiceQuotaLimit})) + '%'"></span>
+            </div>
+        </div>
+
+        <div th:if="${isPro}" class="quota-banner">
+            <p class="text-sm font-semibold text-slate-800">Pro plán · neomezené faktury</p>
+        </div>
+
+        <!-- Tabulka faktur -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div th:if="${invoices == null || invoices.empty}" class="p-8 text-center text-slate-500 text-sm">
+                Zatím nemáš vystavené žádné faktury. Klikni na tlačítko výše a vytvoř první.
+            </div>
+
+            <div th:if="${invoices != null && !invoices.empty}" class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                    <tr class="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                        <th class="py-3.5 px-6">Číslo faktury</th>
+                        <th class="py-3.5 px-6">Odběratel</th>
+                        <th class="py-3.5 px-6">Datum vystavení</th>
+                        <th class="py-3.5 px-6 text-right">Částka celkem</th>
+                        <th class="py-3.5 px-6 text-center">Akce</th>
+                    </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 text-sm text-slate-700">
+                    <tr th:each="invoice : ${invoices}" class="hover:bg-slate-50/85 transition">
+                        <td class="py-4 px-6 font-semibold text-blue-600">
+                            <a th:href="@{'/invoices/' + ${invoice.id}}" th:text="${invoice.invoiceNumber}">202611-001</a>
+                        </td>
+                        <td class="py-4 px-6 font-medium text-slate-900">
+                            <span th:text="${invoice.client != null ? invoice.client.name : 'Nespecifikován'}">Odběratel</span>
+                        </td>
+                        <td class="py-4 px-6 text-slate-500" th:text="${#temporals.format(invoice.issueDate, 'dd.MM.yyyy')}">05.11.2026</td>
+                        <td class="py-4 px-6 text-right font-bold text-slate-900"
+                            th:text="${#numbers.formatDecimal(invoice.grossTotal, 1, 'WHITESPACE', 2, 'POINT') + ' Kč'}">12 100.00 Kč</td>
+                        <td class="py-4 px-6 text-center">
+                            <a th:href="@{'/invoices/' + ${invoice.id}}" class="text-xs font-semibold bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-600 px-3 py-1.5 rounded-lg transition border border-slate-200">
+                                Detail
+                            </a>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: main-footer}"></div>
+
+</body>
+</html>

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="cs">
+<head>
+    <title>MiniFaktura - Daně a Statistiky</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 font-sans leading-normal tracking-normal min-h-screen flex flex-col">
+
+<div th:replace="~{fragments/header :: main-header}"></div>
+
+<!-- Hlavní obsah -->
+<main class="container mx-auto px-4 sm:px-6 py-8 flex-grow space-y-6 sm:space-y-8">
+
+    <!-- Hlavička sekce -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-200">
+        <div>
+            <h1 class="text-xl sm:text-3xl font-black text-slate-900">Statistiky a daňové podklady</h1>
+            <p class="text-xs sm:text-sm text-slate-500 mt-1">Přehled obratu, fakturace a podkladů pro účetnictví.</p>
+        </div>
+
+        <!-- Výběr roku -->
+        <form method="get" action="/taxes" class="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start">
+            <label for="year" class="text-sm font-semibold text-slate-700">Rok:</label>
+            <select name="year" id="year" onchange="this.form.submit()" class="bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-xl px-3 py-2 focus:ring-blue-500 focus:border-blue-500">
+                <option value="2026" th:selected="${selectedYear == 2026}">2026</option>
+                <option value="2025" th:selected="${selectedYear == 2025}">2025</option>
+                <option value="2024" th:selected="${selectedYear == 2024}">2024</option>
+            </select>
+        </form>
+    </div>
+
+    <!-- Souhrnné karty -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+        <div class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-200">
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Celkový obrat za rok</p>
+            <p class="text-2xl sm:text-3xl font-black text-slate-900 mt-2" th:text="${summary != null && summary.taxableRevenue != null ? summary.taxableRevenue + ' Kč' : '0 Kč'}">0 Kč</p>
+        </div>
+        <div class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-200">
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Odhadovaný zisk</p>
+            <p class="text-2xl sm:text-3xl font-black text-emerald-600 mt-2" th:text="${summary != null && summary.incomeTaxBase != null ? summary.incomeTaxBase + ' Kč' : '0 Kč'}">0 Kč</p>
+        </div>
+        <div class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-200">
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Počet vydaných faktur</p>
+            <p class="text-2xl sm:text-3xl font-black text-blue-600 mt-2" th:text="${invoicesCount != null ? invoicesCount : '0'}">0</p>
+        </div>
+    </div>
+
+    <!-- Exporty a akce -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-6 space-y-4">
+        <h2 class="text-base sm:text-lg font-bold text-slate-900">Užitečné exporty a podklady</h2>
+        <p class="text-xs sm:text-sm text-slate-500">Stáhni si kompletní oficiální Přehled o příjmech a výdajích OSVČ přímo do počítače.</p>
+
+        <div class="flex flex-wrap gap-3 pt-2">
+            <!-- Odkaz na přímé stažení souboru do počítače -->
+            <a th:href="@{/taxes/download(year=${selectedYear})}" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold px-5 py-3 rounded-xl shadow-lg shadow-blue-600/20 transition">
+                <span>📥 Stáhnout Přehled OSVČ do počítače</span>
+            </a>
+
+            <a href="#" onclick="alert('CSV export bude brzy k dispozici.'); return false;" class="inline-flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs sm:text-sm font-semibold px-4 py-3 rounded-xl transition">
+                <span>📊 Stáhnout přehled v CSV</span>
+            </a>
+        </div>
+    </div>
+
+</main>
+
+<div th:replace="~{fragments/footer :: main-footer}"></div>
+
+</body>
+</html>

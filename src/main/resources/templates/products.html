@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="cs">
+<head>
+    <title>MiniFaktura - Sklad a položky</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 font-sans leading-normal tracking-normal min-h-screen flex flex-col">
+
+<div th:replace="~{fragments/header :: main-header}"></div>
+
+<!-- Hlavní obsah -->
+<main class="container mx-auto px-4 sm:px-6 py-8 flex-grow space-y-8">
+
+    <!-- Hlavička stránky -->
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+            <h1 class="text-2xl font-black text-slate-900">Správa skladu a položek</h1>
+            <p class="text-sm text-slate-500 mt-1">Eviduj své produkty, zboží nebo služby pro rychlé vystavování faktur.</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+        <!-- Formulář pro přidání nového produktu -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-fit space-y-4">
+            <h2 class="text-lg font-bold text-slate-900">Přidat novou položku</h2>
+
+            <form th:action="@{/products/save}" th:object="${product}" method="post" class="space-y-4">
+                <div>
+                    <label for="name" class="block text-xs font-bold text-slate-600 uppercase mb-1">Název položky / služby:</label>
+                    <input type="text" th:field="*{name}" id="name" required placeholder="např. Webhosting / Konzultace" class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-xl px-4 py-3 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+
+                <div>
+                    <label for="unitPriceGross" class="block text-xs font-bold text-slate-600 uppercase mb-1">Cena vč. DPH (Kč):</label>
+                    <input type="number" step="0.01" th:field="*{unitPriceGross}" id="unitPriceGross" required placeholder="0.00" class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-xl px-4 py-3 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+
+                <div>
+                    <label for="unit" class="block text-xs font-bold text-slate-600 uppercase mb-1">Měrná jednotka:</label>
+                    <input type="text" th:field="*{unit}" id="unit" placeholder="např. ks, hod, m" class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-xl px-4 py-3 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-blue-600/20 transition">
+                    Uložit položku
+                </button>
+            </form>
+        </div>
+
+        <!-- Seznam produktů v tabulce -->
+        <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200 p-6 overflow-hidden">
+            <h2 class="text-lg font-bold text-slate-900 mb-4">Seznam položek</h2>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                    <tr class="border-b border-slate-200 text-xs font-bold text-slate-400 uppercase">
+                        <th class="pb-3 px-3">Název</th>
+                        <th class="pb-3 px-3">Cena vč. DPH</th>
+                        <th class="pb-3 px-3">Jednotka</th>
+                        <th class="pb-3 px-3 text-right">Akce</th>
+                    </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 text-sm">
+                    <tr th:if="${products.empty}">
+                        <td colspan="4" class="py-8 text-center text-slate-400">Zatím nemáš na skladě žádné položky.</td>
+                    </tr>
+                    <tr th:each="product : ${products}" class="hover:bg-slate-50/50 transition">
+                        <td class="py-4 px-3 font-semibold text-slate-900" th:text="${product.name}">Název</td>
+                        <td class="py-4 px-3 text-slate-600" th:text="${product.unitPriceGross + ' Kč'}">0 Kč</td>
+                        <td class="py-4 px-3 text-slate-600 font-medium" th:text="${product.unit != null && !product.unit.isBlank() ? product.unit : '-'}">ks</td>
+                        <td class="py-4 px-3 text-right">
+                            <form th:action="@{/products/delete/{id}(id=${product.id})}" method="post" class="inline"
+                                  onsubmit="return confirm('Opravdu chceš tuto položku smazat?');">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                <button type="submit" class="text-red-500 hover:text-red-700 text-xs font-bold bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition">
+                                    Smazat
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+</main>
+
+<div th:replace="~{fragments/footer :: main-footer}"></div>
+
+</body>
+</html>

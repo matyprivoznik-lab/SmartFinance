@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>MiniFaktura - Finanční analytika</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body class="min-h-screen flex flex-col justify-between bg-slate-100">
+
+<div th:replace="~{fragments/header :: main-header}"></div>
+
+<!-- Hlavní obsah -->
+<main class="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-10 flex-1 w-full space-y-6 sm:space-y-8">
+
+    <div>
+        <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Přehledy a grafy</h1>
+        <p class="text-xs sm:text-sm text-[var(--text-muted)] mt-1">Detailní analýza vašich příjmů, obratu a vybraného DPH.</p>
+    </div>
+
+    <!-- Karty se souhrnnými financemi: mobile 1 sloupec, tablet 2, desktop 4 sloupce -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <div class="app-card p-5 sm:p-6 bg-white">
+            <p class="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1">Celkový obrat (s DPH)</p>
+            <h3 class="text-xl sm:text-2xl font-black text-[var(--text-main)]" th:text="${grossTotalRevenue != null ? #numbers.formatDecimal(grossTotalRevenue, 1, 'POINT', 2, 'POINT') + ' Kč' : '0.00 Kč'}">0.00 Kč</h3>
+        </div>
+        <div class="app-card p-5 sm:p-6 bg-white">
+            <p class="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1">Základ bez DPH</p>
+            <h3 class="text-xl sm:text-2xl font-black text-[var(--text-main)]" th:text="${netAmountTotal != null ? #numbers.formatDecimal(netAmountTotal, 1, 'POINT', 2, 'POINT') + ' Kč' : '0.00 Kč'}">0.00 Kč</h3>
+        </div>
+        <div class="app-card p-5 sm:p-6 bg-white">
+            <p class="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1">Celkové DPH</p>
+            <h3 class="text-xl sm:text-2xl font-black text-[var(--primary)]" th:text="${vatAmountTotal != null ? #numbers.formatDecimal(vatAmountTotal, 1, 'POINT', 2, 'POINT') + ' Kč' : '0.00 Kč'}">0.00 Kč</h3>
+        </div>
+        <div class="app-card p-5 sm:p-6 bg-white">
+            <p class="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1">Vystavených faktur</p>
+            <h3 class="text-xl sm:text-2xl font-black text-[var(--text-main)]" th:text="${invoiceCount != null ? invoiceCount : 0}">0</h3>
+        </div>
+    </div>
+
+    <!-- Sekce s grafem a přepínačem -->
+    <div class="app-card p-5 sm:p-6 lg:p-8 bg-white">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+            <h3 class="text-base sm:text-lg font-bold text-[var(--text-main)]">Vývoj obratu</h3>
+
+            <!-- Přepínač zobrazení Měsíce / Roky -->
+            <div class="inline-flex bg-slate-100 p-1 rounded-xl border border-[var(--border-color)]">
+                <button onclick="switchView('monthly')" id="btnMonthly" class="px-3 sm:px-4 py-1.5 text-xs font-semibold rounded-lg bg-white shadow-sm text-[var(--primary)] transition">Měsíce</button>
+                <button onclick="switchView('yearly')" id="btnYearly" class="px-3 sm:px-4 py-1.5 text-xs font-semibold rounded-lg text-[var(--text-muted)] hover:text-[var(--text-main)] transition">Roky</button>
+            </div>
+        </div>
+
+        <div class="relative h-64 sm:h-80 w-full">
+            <canvas id="revenueChart"></canvas>
+        </div>
+    </div>
+
+</main>
+
+<div th:replace="~{fragments/footer :: main-footer}"></div>
+
+<!-- Skript pro interaktivní Chart.js graf s přepínáním -->
+<script th:inline="javascript">
+    const monthlyLabels = /*[[${monthlyLabels}]]*/ [];
+    const monthlyData = /*[[${monthlyData}]]*/ [];
+    const yearlyLabels = /*[[${yearlyLabels}]]*/ [];
+    const yearlyData = /*[[${yearlyData}]]*/ [];
+
+    const ctx = document.getElementById('revenueChart').getContext('2d');
+    let revenueChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: monthlyLabels,
+            datasets: [{
+                label: 'Obrat v Kč',
+                data: monthlyData,
+                backgroundColor: 'rgba(99, 102, 241, 0.2)',
+                borderColor: 'rgba(99, 102, 241, 1)',
+                borderWidth: 2,
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: '#f3f4f6' }
+                },
+                x: {
+                    grid: { display: false }
+                }
+            },
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+
+    function switchView(type) {
+        const btnMonthly = document.getElementById('btnMonthly');
+        const btnYearly = document.getElementById('btnYearly');
+
+        if (type === 'monthly') {
+            revenueChart.data.labels = monthlyLabels;
+            revenueChart.data.datasets[0].data = monthlyData;
+            btnMonthly.className = "px-3 sm:px-4 py-1.5 text-xs font-semibold rounded-lg bg-white shadow-sm text-[var(--primary)] transition";
+            btnYearly.className = "px-3 sm:px-4 py-1.5 text-xs font-semibold rounded-lg text-[var(--text-muted)] hover:text-[var(--text-main)] transition";
+        } else {
+            revenueChart.data.labels = yearlyLabels;
+            revenueChart.data.datasets[0].data = yearlyData;
+            btnYearly.className = "px-3 sm:px-4 py-1.5 text-xs font-semibold rounded-lg bg-white shadow-sm text-[var(--primary)] transition";
+            btnMonthly.className = "px-3 sm:px-4 py-1.5 text-xs font-semibold rounded-lg text-[var(--text-muted)] hover:text-[var(--text-main)] transition";
+        }
+        revenueChart.update();
+    }
+</script>
+
+</body>
+</html>
