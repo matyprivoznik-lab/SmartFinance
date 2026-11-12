@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="cs">
+<body>
+
+<!-- Definice fragmentu s názvem 'main-footer' -->
+<footer th:fragment="main-footer" class="w-full bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-500 mt-auto print:hidden">
+    <div class="container mx-auto px-4 sm:px-6 max-w-5xl space-y-3">
+        <!-- Právní prohlášení / Omezení odpovědnosti -->
+        <p class="text-[11px] leading-relaxed text-slate-400 max-w-3xl mx-auto">
+            <strong>Upozornění:</strong> MiniFaktura je výhradně technický nástroj (SaaS) pro správu a vystavování dokladů a neposkytuje účetní, daňové ani právní poradenství. Za věcnou i formální správnost zadaných údajů a dodržení platných daňových předpisů odpovídá výhradně uživatel.
+        </p>
+
+        <!-- Odkazy na právní dokumenty a tvoje weby -->
+        <div class="flex flex-wrap justify-center items-center gap-x-4 gap-y-1 text-xs font-medium text-slate-500 pt-1">
+            <a href="/vop" class="hover:text-blue-600 transition">Obchodní podmínky</a>
+            <span class="text-slate-300">•</span>
+            <a href="/privacy" class="hover:text-blue-600 transition">Ochrana osobních údajů (GDPR)</a>
+            <span class="text-slate-300">•</span>
+            <a href="https://matejprivoznik.eu" target="_blank" rel="noopener noreferrer" class="hover:text-blue-600 transition">Matěj Přívozník</a>
+            <span class="text-slate-300">•</span>
+            <a href="https://velocode.eu" target="_blank" rel="noopener noreferrer" class="font-semibold text-slate-700 hover:text-blue-600 transition">Velocode Studio</a>
+        </div>
+
+        <p class="pt-1 text-slate-400">&copy; 2026 MiniFaktura. Vytvořeno pod záštitou <a href="https://velocode.eu" target="_blank" rel="noopener noreferrer" class="hover:underline text-slate-500 font-medium">Velocode</a>.</p>
+    </div>
+</footer>
+
+</body>
+</html>

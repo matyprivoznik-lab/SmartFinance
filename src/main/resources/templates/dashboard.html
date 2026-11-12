@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="cs">
+<head>
+    <title>MiniFaktura - Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 font-sans leading-normal tracking-normal min-h-screen flex flex-col">
+
+<div th:replace="~{fragments/header :: main-header}"></div>
+
+<!-- Hlavní obsah dashboardu -->
+<main class="container mx-auto px-6 py-8 flex-grow space-y-8">
+
+    <!-- Uvítání a primární rychlé tlačítko pro vystavení faktury -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-black text-slate-900">Vítejte, <span th:text="${username}">Uživatel</span>!</h1>
+            <p class="text-sm text-slate-500 mt-1">Tady je rychlý přehled tvého podnikání a financí.</p>
+        </div>
+        <a href="/invoices/new" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-3.5 rounded-xl shadow-lg shadow-blue-600/20 transition text-base">
+            <span>➕ Rychle vystavit fakturu</span>
+        </a>
+    </div>
+
+    <!-- Statistiky (Zisk, prodeje, přehledy) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+
+        <!-- Celkový prodej / Obrat -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
+            <div class="flex justify-between items-center text-slate-500 text-xs font-bold uppercase tracking-wider">
+                <span>Celkový obrat</span>
+                <span class="p-2 bg-blue-50 text-blue-600 rounded-lg">📈</span>
+            </div>
+            <div class="mt-4">
+                <p class="text-2xl font-black text-slate-900" th:text="${grossTotalRevenue != null ? grossTotalRevenue + ' Kč' : '0 Kč'}">0 Kč</p>
+                <p class="text-xs text-slate-400 mt-1">Za celé období</p>
+            </div>
+        </div>
+
+        <!-- Čistý zisk (odhad / podklad) -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
+            <div class="flex justify-between items-center text-slate-500 text-xs font-bold uppercase tracking-wider">
+                <span>Odhadovaný zisk</span>
+                <span class="p-2 bg-emerald-50 text-emerald-600 rounded-lg">💰</span>
+            </div>
+            <div class="mt-4">
+                <p class="text-2xl font-black text-emerald-600" th:text="${estimatedProfit != null ? estimatedProfit + ' Kč' : '0 Kč'}">0 Kč</p>
+                <p class="text-xs text-slate-400 mt-1">Po odečtení nákladů</p>
+            </div>
+        </div>
+
+        <!-- Vystavené faktury -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
+            <div class="flex justify-between items-center text-slate-500 text-xs font-bold uppercase tracking-wider">
+                <span>Vystavené faktury</span>
+                <span class="p-2 bg-indigo-50 text-indigo-600 rounded-lg">📄</span>
+            </div>
+            <div class="mt-4">
+                <p class="text-2xl font-black text-slate-900" th:text="${invoicesCount != null ? invoicesCount : '0'}">0</p>
+                <a href="/invoices" class="text-xs text-blue-600 font-semibold hover:underline mt-1 inline-block">Zobrazit seznam &rarr;</a>
+            </div>
+        </div>
+
+        <!-- Položky na skladě -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
+            <div class="flex justify-between items-center text-slate-500 text-xs font-bold uppercase tracking-wider">
+                <span>Sklad a položky</span>
+                <span class="p-2 bg-amber-50 text-amber-600 rounded-lg">📦</span>
+            </div>
+            <div class="mt-4">
+                <p class="text-2xl font-black text-slate-900" th:text="${productsCount != null ? productsCount : '0'}">0</p>
+                <a href="/products" class="text-xs text-blue-600 font-semibold hover:underline mt-1 inline-block">Spravovat sklad &rarr;</a>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Rychlý odkaz na detailní daně a statistiky -->
+    <div class="bg-gradient-to-r from-slate-900 to-slate-800 text-white p-6 sm:p-8 rounded-2xl shadow-lg flex flex-col sm:flex-row justify-between items-center gap-6">
+        <div>
+            <h2 class="text-xl font-bold">Potřebuješ podklady pro daňové přiznání?</h2>
+            <p class="text-sm text-slate-300 mt-1">Zobraz si detailní přehledy DPH, součty za rok a exporty.</p>
+        </div>
+        <a href="/taxes" class="bg-white hover:bg-slate-100 text-slate-900 font-bold px-6 py-3 rounded-xl transition text-sm shadow-md whitespace-nowrap">
+            Otevřít Statistiky & Daně &rarr;
+        </a>
+    </div>
+
+</main>
+
+<div th:replace="~{fragments/footer :: main-footer}"></div>
+
+</body>
+</html>

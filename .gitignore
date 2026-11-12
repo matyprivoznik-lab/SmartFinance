@@ -1,0 +1,28 @@
+# Build
+target/
+!.mvn/wrapper/maven-wrapper.jar
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.cursor/
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Logs / env secrets
+*.log
+.env
+.env.*
+!.env.example
+application-local.properties
+
+# H2 / local DB
+*.db
+*.mv.db
+*.trace.db

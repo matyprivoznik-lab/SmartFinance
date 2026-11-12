@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="cs">
+<head>
+    <title>Nastavení profilu - MiniFaktura</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 font-sans leading-normal tracking-normal min-h-screen flex flex-col">
+
+<div th:replace="~{fragments/header :: main-header}"></div>
+
+<!-- Obsah -->
+<main class="container mx-auto px-4 sm:px-6 py-8 flex-grow">
+    <div class="max-w-2xl mx-auto bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8 space-y-6">
+
+        <div>
+            <h1 class="text-2xl font-black text-slate-900">Nastavení OSVČ profilu</h1>
+            <p class="text-sm text-slate-500 mt-1">Tyto údaje se automaticky předvyplňují na faktury a do daňového přehledu.</p>
+        </div>
+
+        <div th:if="${param.success}" class="bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm p-4 rounded-xl font-medium">
+            ✓ Nastavení profilu bylo úspěšně uloženo.
+        </div>
+
+        <form th:action="@{/settings}" method="post" class="space-y-5">
+
+            <div class="space-y-1.5">
+                <label class="block text-sm font-bold text-slate-700">Jméno / Název firmy</label>
+                <input type="text" name="name" th:value="${currentUser != null ? currentUser.name : ''}" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="space-y-1.5">
+                    <label class="block text-sm font-bold text-slate-700">IČO</label>
+                    <input type="text" name="ico" th:value="${currentUser != null ? currentUser.ico : ''}" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
+                </div>
+                <div class="space-y-1.5">
+                    <label class="block text-sm font-bold text-slate-700">DIČ (pokud jste plátce)</label>
+                    <input type="text" name="vatNumber" th:value="${currentUser != null ? currentUser.vatNumber : ''}" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
+                </div>
+            </div>
+
+            <div class="space-y-1.5">
+                <label class="block text-sm font-bold text-slate-700">Sídlo / Adresa</label>
+                <input type="text" name="address" th:value="${currentUser != null ? currentUser.address : ''}" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
+            </div>
+
+            <!-- Výběr typu činnosti OSVČ (Hlavní vs. Vedlejší) -->
+            <div class="space-y-2 pt-2 border-t border-slate-100">
+                <label class="block text-sm font-bold text-slate-700">Typ činnosti OSVČ</label>
+                <div class="flex flex-col sm:flex-row gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <label class="inline-flex items-center gap-2 cursor-pointer text-sm font-semibold text-slate-800">
+                        <input type="radio" name="mainActivity" value="true" th:checked="${currentUser == null || currentUser.mainActivity}" class="w-4 h-4 text-blue-600 focus:ring-blue-500">
+                        <span>Hlavní činnost</span>
+                    </label>
+                    <label class="inline-flex items-center gap-2 cursor-pointer text-sm font-semibold text-slate-800">
+                        <input type="radio" name="mainActivity" value="false" th:checked="${currentUser != null && !currentUser.mainActivity}" class="w-4 h-4 text-blue-600 focus:ring-blue-500">
+                        <span>Vedlejší činnost (Student, Zaměstnanec, Důchodce)</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- DPH & Paušál -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-100">
+                <div class="space-y-1.5">
+                    <label class="block text-sm font-bold text-slate-700">Paušální výdaje (%)</label>
+                    <select name="expenseRate" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm bg-white">
+                        <option value="80.0" th:selected="${currentUser != null && currentUser.expenseRate == 80.0}">80 % (Řemeslné živnosti)</option>
+                        <option value="60.0" th:selected="${currentUser != null && currentUser.expenseRate == 60.0}">60 % (Volné živnosti, Vývoj softwaru)</option>
+                        <option value="40.0" th:selected="${currentUser != null && currentUser.expenseRate == 40.0}">40 % (Svobodná povolání)</option>
+                    </select>
+                </div>
+                <div class="space-y-1.5 flex flex-col justify-end">
+                    <label class="inline-flex items-center gap-2 cursor-pointer pb-2.5">
+                        <input type="checkbox" name="vatPayer" value="true" th:checked="${currentUser != null && currentUser.vatPayer}" class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500">
+                        <span class="text-sm font-bold text-slate-700">Jsem plátce DPH</span>
+                    </label>
+                </div>
+            </div>
+            <!-- Příklad bloku pro sekci Nastavení účtu / Zabezpečení -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-900">Zabezpečení a dvoufázové ověření (2FA)</h2>
+                        <p class="text-xs text-slate-500">Chraňte svůj účet pomocí ověřovací aplikace (Google Authenticator, Authy).</p>
+                    </div>
+                    <a href="/settings/mfa" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-sm font-semibold rounded-xl transition">
+                        Spravovat 2FA &rarr;
+                    </a>
+                </div>
+            </div>
+
+            <div class="pt-4 flex justify-end">
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded-xl shadow transition text-sm">
+                    Uložit změny
+                </button>
+            </div>
+        </form>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: main-footer}"></div>
+</body>
+</html>

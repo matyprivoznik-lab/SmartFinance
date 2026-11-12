@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>MiniFaktura — Fakturace pro české OSVČ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body class="mf-landing theme-pro">
+
+<nav class="landing-nav no-print" aria-label="Hlavní navigace">
+    <a href="/login" class="landing-nav__link">Přihlásit se</a>
+    <a href="/register" class="landing-nav__cta">Začít zdarma</a>
+</nav>
+
+<header class="hero-bleed" role="banner">
+    <div class="hero-bleed__grid">
+        <div class="hero-copy">
+            <p class="hero-brand" aria-label="MiniFaktura">Mini<span>Faktura</span></p>
+            <h1 class="hero-headline">Faktura s QR platbou bez zbytečné byrokracie.</h1>
+            <p class="hero-lead">Zadáš IČO, ARES doplní údaje a doklad je připravený k odeslání — legálně, přehledně, za pár minut.</p>
+            <div class="hero-ctas">
+                <a href="/register" class="btn-hero-primary">Založit účet přes IČO</a>
+                <a href="/login" class="btn-hero-ghost">Mám účet</a>
+            </div>
+        </div>
+
+        <div class="hero-visual" aria-hidden="true">
+            <article class="invoice-mock">
+                <div class="invoice-mock__row">
+                    <div>
+                        <p class="invoice-mock__title">Faktura – daňový doklad</p>
+                        <p class="invoice-mock__number">č. 2026-0042</p>
+                    </div>
+                </div>
+                <div class="invoice-mock__row">
+                    <div class="invoice-mock__party">
+                        <strong>Dodavatel</strong>
+                        Jana Nováková · IČO 12345678<br>
+                        Praha 3
+                    </div>
+                    <div class="invoice-mock__party" style="text-align: right;">
+                        <strong>Odběratel</strong>
+                        Modrá Sova a.s.<br>
+                        IČO 87654321
+                    </div>
+                </div>
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Položka</th>
+                        <th>Mn.</th>
+                        <th>Cena</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>Konzultace a návrh</td>
+                        <td>1</td>
+                        <td>12 400 Kč</td>
+                    </tr>
+                    <tr>
+                        <td>Implementace</td>
+                        <td>8 h</td>
+                        <td>9 600 Kč</td>
+                    </tr>
+                    </tbody>
+                </table>
+                <div class="invoice-mock__footer">
+                    <div>
+                        <p class="invoice-mock__title">K úhradě do 14 dní</p>
+                        <p class="invoice-mock__total">22 000 Kč</p>
+                    </div>
+                    <svg class="invoice-mock__qr" viewBox="0 0 21 21" fill="currentColor" role="img" aria-label="Ukázka QR platby SPD">
+                        <path fill-rule="evenodd" d="M0 0h7v7H0V0zm1 1v5h5V1H1zm1 1h3v3H2V2z"/>
+                        <path fill-rule="evenodd" d="M14 0h7v7h-7V0zm1 1v5h5V1h-5zm1 1h3v3h-3V2z"/>
+                        <path fill-rule="evenodd" d="M0 14h7v7H0v-7zm1 1v5h5v-5H1zm1 1h3v3H2v-3z"/>
+                        <rect x="9" y="9" width="1" height="1"/><rect x="11" y="9" width="1" height="1"/><rect x="13" y="9" width="1" height="1"/>
+                        <rect x="9" y="11" width="1" height="1"/><rect x="12" y="11" width="1" height="1"/><rect x="14" y="11" width="1" height="1"/>
+                        <rect x="10" y="13" width="1" height="1"/><rect x="13" y="13" width="1" height="1"/><rect x="15" y="13" width="1" height="1"/>
+                        <rect x="9" y="15" width="1" height="1"/><rect x="11" y="15" width="1" height="1"/><rect x="14" y="15" width="1" height="1"/>
+                        <rect x="16" y="16" width="1" height="1"/><rect x="18" y="17" width="1" height="1"/><rect x="17" y="19" width="1" height="1"/>
+                    </svg>
+                </div>
+            </article>
+        </div>
+    </div>
+</header>
+
+<main class="mf-landing-below">
+    <section id="funkce" class="landing-section landing-reveal" aria-labelledby="funkce-title">
+        <h2 id="funkce-title" class="landing-section__title">Co v aplikaci najdeš</h2>
+        <p class="landing-section__lead">Jen to, co OSVČ při fakturaci opravdu potřebuje — žádné přeplněné menu ani skryté moduly.</p>
+        <ul class="feature-list">
+            <li>
+                <h3>ARES na jedno IČO</h3>
+                <p>Název firmy, sídlo i právní forma se doplní z registru — u tebe i u odběratele.</p>
+            </li>
+            <li>
+                <h3>QR platba SPD</h3>
+                <p>Číslo účtu převedeme na IBAN a na faktuře vznikne kód pro české mobilní banky.</p>
+            </li>
+            <li>
+                <h3>Přehled a archiv</h3>
+                <p>Vystavené doklady, splatnosti a odběratelé na jednom místě pro tebe i účetní.</p>
+            </li>
+        </ul>
+    </section>
+
+    <section id="ceny" class="landing-section landing-reveal" aria-labelledby="ceny-title">
+        <h2 id="ceny-title" class="landing-section__title">Jednoduché ceny</h2>
+        <p class="landing-section__lead">Vyzkoušej zdarma. Když fakturuješ víc, přejdeš na předplatné bez překvapení v ceně.</p>
+        <div class="pricing-grid">
+            <div class="pricing-plan">
+                <h3>Zdarma</h3>
+                <p class="price">0 Kč <small>/ měsíc</small></p>
+                <ul>
+                    <li>5 faktur měsíčně</li>
+                    <li>ARES a QR platby</li>
+                    <li>Adresář odběratelů</li>
+                </ul>
+                <a href="/register" class="btn-primary">Registrace zdarma</a>
+            </div>
+            <div class="pricing-plan pricing-plan--highlight">
+                <h3>Předplatné</h3>
+                <p class="price">199 Kč <small>/ měsíc</small></p>
+                <ul>
+                    <li>Neomezený počet faktur</li>
+                    <li>Prioritní podpora</li>
+                    <li>Vše z bezplatného tarifu</li>
+                </ul>
+                <a href="/register" class="btn-primary">Zvolit předplatné</a>
+            </div>
+        </div>
+    </section>
+
+    <section id="faq" class="landing-section landing-reveal" aria-labelledby="faq-title">
+        <h2 id="faq-title" class="landing-section__title">Časté otázky</h2>
+        <div class="faq-list">
+            <details class="faq-item">
+                <summary>Platí limity na bezplatném tarifu?</summary>
+                <p>Ano — v tarifu Zdarma vystavíš 5 faktur za kalendářní měsíc. Po vyčerpání můžeš počkat na další měsíc nebo přejít na předplatné.</p>
+            </details>
+            <details class="faq-item">
+                <summary>Proč zadávat IČO při registraci?</summary>
+                <p>Podle IČO načteme tvoje údaje z ARES a předvyplníme profil. Doplníš hlavně bankovní účet.</p>
+            </details>
+            <details class="faq-item">
+                <summary>Je QR platba povinná?</summary>
+                <p>Ne. Kód se na faktuře vygeneruje automaticky, ale doklad můžeš poslat i bez něj — podle potřeby klienta.</p>
+            </details>
+        </div>
+    </section>
+</main>
+
+<div th:replace="~{fragments/footer :: main-footer}"></div>
+
+<script th:inline="none">
+    (function () {
+        var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (reduce) {
+            document.querySelectorAll('.landing-reveal').forEach(function (el) {
+                el.classList.add('is-visible');
+            });
+            return;
+        }
+        var io = new IntersectionObserver(function (entries) {
+            entries.forEach(function (e) {
+                if (e.isIntersecting) {
+                    e.target.classList.add('is-visible');
+                    io.unobserve(e.target);
+                }
+            });
+        }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+        document.querySelectorAll('.landing-reveal').forEach(function (el) {
+            io.observe(el);
+        });
+    })();
+</script>
+</body>
+</html>

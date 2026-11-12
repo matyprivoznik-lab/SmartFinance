@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="cs">
+<head>
+    <title th:text="${'Daňový přehled OSVČ ' + selectedYear}">Daňový přehled OSVČ</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        @media print {
+            header, footer, .no-print {
+                display: none !important;
+            }
+            body {
+                background-color: white !important;
+            }
+            main {
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            #tax-report-card {
+                max-width: 100% !important;
+                border: none !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 font-sans leading-normal tracking-normal min-h-screen flex flex-col">
+
+<div th:replace="~{fragments/header :: main-header}"></div>
+
+<!-- Obsah PDF -->
+<main class="container mx-auto px-4 sm:px-6 py-8 flex-grow">
+    <div id="tax-report-card" class="max-w-4xl mx-auto bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-10 space-y-8">
+
+        <!-- Akční lišta -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200 pb-6">
+            <div>
+                <h1 class="text-2xl font-black text-slate-900" th:text="${'Daňové a pojistné podklady OSVČ ' + selectedYear}">Daňové podklady OSVČ</h1>
+                <p class="text-sm text-slate-500 mt-1">Kalkulace daně z příjmů, sociálního a zdravotního pojištění</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2.5 no-print">
+                <button onclick="downloadPdfFile()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-3.5 rounded-xl shadow transition text-sm flex items-center gap-1.5">
+                    <span>📥 Stáhnout PDF</span>
+                </button>
+                <button onclick="window.print()" class="bg-slate-900 hover:bg-slate-800 text-white font-semibold py-2 px-3.5 rounded-xl shadow transition text-sm flex items-center gap-1.5">
+                    <span>🖨️ Vytisknout</span>
+                </button>
+                <a href="/taxes" class="text-sm font-semibold text-slate-600 hover:text-blue-600 px-2">&larr; Zpět</a>
+            </div>
+        </div>
+
+        <!-- Poplatník -->
+        <div class="bg-slate-50 p-6 rounded-xl border border-slate-200 text-sm space-y-2">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Údaje o poplatníkovi (OSVČ)</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <p class="text-slate-500">Jméno / Firma:</p>
+                    <p class="font-bold text-slate-900" th:text="${user != null && user.name != null ? user.name : 'Neuvedeno'}"></p>
+                </div>
+                <div>
+                    <p class="text-slate-500">IČO:</p>
+                    <p class="font-bold text-slate-900" th:text="${user != null && user.ico != null ? user.ico : 'Neuvedeno'}"></p>
+                </div>
+                <div>
+                    <p class="text-slate-500">Typ činnosti:</p>
+                    <p class="font-bold text-blue-600" th:text="${user != null && user.mainActivity ? 'Hlavní činnost' : 'Vedlejší činnost (Student / Zaměstnanec / Důchodce)'}"></p>
+                </div>
+                <div>
+                    <p class="text-slate-500">Plátce DPH / DIČ:</p>
+                    <p class="font-medium text-slate-800" th:text="${(user != null && user.vatPayer) ? ('Ano (DIČ: ' + user.vatNumber + ')') : 'Ne (Neplátce DPH)'}"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Příjmy a Základ Daně -->
+        <div>
+            <h3 class="text-sm font-bold uppercase tracking-wider text-slate-500 mb-4">1. Příjmy a základ daně</h3>
+            <div class="border border-slate-200 rounded-xl overflow-hidden divide-y divide-slate-200 text-sm">
+                <div class="flex justify-between items-center p-4 bg-white">
+                    <div>
+                        <p class="font-bold text-slate-900">Zdanitelné příjmy (bez DPH)</p>
+                        <p class="text-xs text-slate-500">Základ faktur za rok <span th:text="${selectedYear}"></span></p>
+                    </div>
+                    <span class="font-bold text-base text-slate-900" th:text="${summary.taxableRevenue + ' Kč'}"></span>
+                </div>
+
+                <div class="flex justify-between items-center p-4 bg-slate-50">
+                    <div>
+                        <p class="font-bold text-slate-900" th:text="${'Paušální výdaje (' + (user.expenseRate <= 1 ? user.expenseRate * 100 : user.expenseRate) + ' %)'}">Paušální výdaje</p>
+                        <p class="text-xs text-slate-500">Výdaje uplatněné procentem</p>
+                    </div>
+                    <span class="font-semibold text-slate-700" th:text="${'- ' + summary.flatExpenses + ' Kč'}"></span>
+                </div>
+
+                <div class="flex justify-between items-center p-4 bg-white">
+                    <div>
+                        <p class="font-bold text-slate-900">Dílčí základ daně</p>
+                        <p class="text-xs text-slate-500">Příjmy po odečtení paušálu</p>
+                    </div>
+                    <span class="font-bold text-base text-blue-600" th:text="${summary.incomeTaxBase + ' Kč'}"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Karta Odvody & Pojistné (Dynamická dle Hlavní vs Vedlejší činnosti) -->
+        <div>
+            <h3 class="text-sm font-bold uppercase tracking-wider text-slate-500 mb-4">2. Odvody a pojistné</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-5 text-sm">
+
+                <!-- KARTA 1: Daň z příjmů -->
+                <div class="bg-white border-2 border-blue-500 rounded-2xl overflow-hidden shadow-sm flex flex-col justify-between">
+                    <div class="bg-blue-600 p-3 text-white">
+                        <p class="text-xs font-bold uppercase tracking-wider">Daň z příjmů (15 %)</p>
+                    </div>
+                    <div class="p-5 flex-grow">
+                        <p class="text-3xl font-black text-slate-900" th:text="${summary.incomeTaxDue + ' Kč'}"></p>
+                        <p class="text-xs text-slate-500 mt-3 pt-3 border-t border-slate-100">Vypočteno ze základu daně před odečtením slev.</p>
+                    </div>
+                </div>
+
+                <!-- KARTA 2: Sociální pojištění -->
+                <div class="bg-white border-2 border-emerald-500 rounded-2xl overflow-hidden shadow-sm flex flex-col justify-between">
+                    <div class="bg-emerald-600 p-3 text-white">
+                        <p class="text-xs font-bold uppercase tracking-wider">Sociální pojištění (29,2 %)</p>
+                    </div>
+                    <div class="p-5 flex-grow">
+                        <p class="text-3xl font-black text-slate-900" th:text="${summary.socialInsurance + ' Kč'}"></p>
+                        <p class="text-xs text-slate-500 mt-3 pt-3 border-t border-slate-100"
+                           th:text="${user.mainActivity ? 'Vyměřovací základ min. 209 556 Kč ročně (hlavní činnost).' : (summary.socialInsurance != null && summary.socialInsurance.compareTo(T(java.math.BigDecimal).ZERO) == 0 ? 'Zisk nepřesáhl rozhodnou částku (111 500 Kč) - odvod 0 Kč.' : 'Vypočteno ze skutečného vyměřovacího základu.')}">
+                        </p>
+                    </div>
+                </div>
+
+                <!-- KARTA 3: Zdravotní pojištění -->
+                <div class="bg-white border-2 border-purple-500 rounded-2xl overflow-hidden shadow-sm flex flex-col justify-between">
+                    <div class="bg-purple-600 p-3 text-white">
+                        <p class="text-xs font-bold uppercase tracking-wider">Zdravotní pojištění (13,5 %)</p>
+                    </div>
+                    <div class="p-5 flex-grow">
+                        <p class="text-3xl font-black text-slate-900" th:text="${summary.healthInsurance + ' Kč'}"></p>
+                        <p class="text-xs text-slate-500 mt-3 pt-3 border-t border-slate-100"
+                           th:text="${user.mainActivity ? 'Vyměřovací základ min. 279 402 Kč ročně (hlavní činnost).' : 'Vypočteno ze skutečného základu (bez minima pro vedlejší činnost).'}">
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Upozornění -->
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs text-slate-600">
+            <strong>Poznámka k výpočtu:</strong> Plátci DPH počítají zdanitelné příjmy z částky bez DPH. Vyměřovací základ pro pojištění tvoří 50 % z dílčího základu daně. U vedlejší činnosti minimální vyměřovací základy neplatí a sociální pojištění se do rozhodné částky neplatí.
+        </div>
+
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: main-footer}"></div>
+
+<script>
+    function downloadPdfFile() {
+        const element = document.getElementById('tax-report-card');
+        const noPrintElements = document.querySelectorAll('.no-print');
+
+        noPrintElements.forEach(el => el.style.display = 'none');
+
+        const opt = {
+            margin:       10,
+            filename:     'Danovy_a_pojistny_prehled_OSVC.pdf',
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2 },
+            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        html2pdf().set(opt).from(element).save().then(() => {
+            noPrintElements.forEach(el => el.style.display = '');
+        });
+    }
+</script>
+</body>
+</html>
