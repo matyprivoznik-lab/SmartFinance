@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="cs">
+<head>
+    <title>Obchodní podmínky – MiniFaktura</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body class="bg-slate-50 font-sans leading-normal tracking-normal min-h-screen flex flex-col">
+
+<header class="w-full bg-white shadow-sm border-b border-slate-200 py-4 print:hidden">
+    <div class="container mx-auto px-4 sm:px-6 flex justify-between items-center">
+        <a href="/" class="text-xl font-black text-blue-600 tracking-tight">MiniFaktura</a>
+        <a href="/register" class="text-sm font-semibold text-slate-600 hover:text-blue-600">Registrace</a>
+    </div>
+</header>
+
+<main class="container mx-auto px-4 sm:px-6 py-10 flex-grow">
+    <article class="max-w-3xl mx-auto bg-white border border-slate-200 rounded-2xl p-6 sm:p-8">
+        <div th:fragment="document" class="space-y-4 text-sm text-slate-700 leading-relaxed">
+        <h1 class="text-2xl font-black text-slate-900">Obchodní podmínky služby MiniFaktura</h1>
+        <p class="text-xs text-slate-500">Verze platná od 12. listopadu 2026. Dokument si můžeš kdykoli znovu otevřít v nastavení účtu.</p>
+
+        <h2 class="text-base font-bold text-slate-900 pt-2">1. Kdo službu provozuje</h2>
+        <p>Službu MiniFaktura provozuje Velocode Studio, Matěj Přívozník. Kontakt je na <a href="https://velocode.eu" class="text-blue-600 underline" target="_blank" rel="noopener noreferrer">velocode.eu</a> a <a href="https://matejprivoznik.eu" class="text-blue-600 underline" target="_blank" rel="noopener noreferrer">matejprivoznik.eu</a>.</p>
+
+        <h2 class="text-base font-bold text-slate-900 pt-2">2. Co služba je</h2>
+        <p>MiniFaktura je technický nástroj pro vystavování a evidenci faktur, kontaktů, skladových položek a orientačního daňového přehledu. Není účetní, daňové ani právní poradenství. Za věcnou a formální správnost dokladů a za plnění daňových povinností odpovídá uživatel.</p>
+
+        <h2 class="text-base font-bold text-slate-900 pt-2">3. Účet a souhlas</h2>
+        <p>Účet vznikne dokončením registrace. Podmínkou je potvrzení těchto obchodních podmínek a seznámení se s informacemi o zpracování osobních údajů. Marketingové zprávy jsou samostatné a dobrovolné. Přihlašovací heslo si uživatel chrání sám. Dvoufázové ověření je volitelné.</p>
+
+        <h2 class="text-base font-bold text-slate-900 pt-2">4. Tarify</h2>
+        <p>Free plán umožňuje omezený počet nových faktur v kalendářním měsíci. Měsíční a roční plán limity nových faktur odstraňuje a platí se přes platební bránu, pokud je u provozovatele zapnutá. Ceny uvedené v aplikaci jsou ceny v okamžiku objednávky. Neuhrazené předplatné se po skončení období vrací na Free plán.</p>
+
+        <h2 class="text-base font-bold text-slate-900 pt-2">5. Data a odchod</h2>
+        <p>Faktury patří uživateli. V nastavení i v seznamu faktur je export do JSON a import stejného souboru, aby šlo data odnést k jinému nástroji nebo je sem vrátit. Smazání účtu smaže účet, faktury, kontakty, sklad a předplatné vedené v aplikaci. Před smazáním si uživatel data stáhne. Zákonná archivační povinnost k daňovým dokladům zůstává na uživateli.</p>
+
+        <h2 class="text-base font-bold text-slate-900 pt-2">6. Dostupnost a odpovědnost</h2>
+        <p>Služba se poskytuje tak, jak je k dispozici. Provozovatel neodpovídá za škody z nesprávně zadaných údajů, z výpadku třetích stran (registr ARES, platební brána, e-mail) ani za ušlý zisk. Odpovědnost za úmysl a hrubou nedbalost tím není vyloučena.</p>
+
+        <h2 class="text-base font-bold text-slate-900 pt-2">7. Ukončení</h2>
+        <p>Uživatel může účet kdykoli smazat v nastavení. Provozovatel může účet omezit, pokud porušuje tyto podmínky, ohrožuje provoz nebo je v prodlení s platbou placeného plánu. Před trvalým zrušením ze strany provozovatele, pokud to okolnosti dovolí, uživatel dostane možnost si data exportovat.</p>
+
+        <h2 class="text-base font-bold text-slate-900 pt-2">8. Změny a právo</h2>
+        <p>Podmínky se mohou změnit. Nové znění je na této stránce a v účtu. Pokračování v používání po zveřejnění změny je přijetí nového znění. Rozhodné právo je právo České republiky.</p>
+        </div>
+    </article>
+</main>
+
+<div th:replace="~{fragments/footer :: main-footer}"></div>
+</body>
+</html>

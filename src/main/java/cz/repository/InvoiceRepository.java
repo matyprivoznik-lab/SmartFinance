@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
@@ -17,4 +18,6 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
     List<Invoice> findByUserEmail(String email);
 
     long countByUserAndIssueDateBetween(User user, LocalDate from, LocalDate to);
+
+    Optional<Invoice> findByUserAndInvoiceNumber(User user, String invoiceNumber);
 }

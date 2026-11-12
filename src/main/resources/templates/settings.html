@@ -19,7 +19,9 @@
             <p class="text-sm text-slate-500 mt-1">Tyto údaje se automaticky předvyplňují na faktury a do daňového přehledu.</p>
         </div>
 
-        <div th:if="${param.success}" class="bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm p-4 rounded-xl font-medium">
+        <div th:if="${successMessage}" class="bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm p-4 rounded-xl font-medium" th:text="${successMessage}"></div>
+        <div th:if="${errorMessage}" class="bg-rose-50 border border-rose-200 text-rose-800 text-sm p-4 rounded-xl font-medium" th:text="${errorMessage}"></div>
+        <div th:if="${param.success != null and successMessage == null}" class="bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm p-4 rounded-xl font-medium">
             ✓ Nastavení profilu bylo úspěšně uloženo.
         </div>
 
@@ -98,6 +100,99 @@
             </div>
         </form>
     </div>
+
+    <section class="max-w-2xl mx-auto mt-6 bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8 space-y-5">
+        <div>
+            <h2 class="text-xl font-black text-slate-900">Osobní údaje a souhlasy</h2>
+            <p class="text-sm text-slate-500 mt-1">Tady splníš přístup, opravu, odvolání marketingu i výmaz. Oprava jména, adresy a daňových voleb je ve formuláři výše.</p>
+        </div>
+
+        <div class="text-sm text-slate-700 space-y-1">
+            <p>
+                Obchodní podmínky:
+                <strong th:if="${currentUser.termsAcceptedAt != null}" th:text="${#temporals.format(currentUser.termsAcceptedAt, 'd. M. yyyy HH:mm')}">datum</strong>
+                <strong th:if="${currentUser.termsAcceptedAt == null}">zatím nepotvrzeno</strong>
+            </p>
+            <p>
+                Informace o osobních údajích:
+                <strong th:if="${currentUser.privacyAcceptedAt != null}" th:text="${#temporals.format(currentUser.privacyAcceptedAt, 'd. M. yyyy HH:mm')}">datum</strong>
+                <strong th:if="${currentUser.privacyAcceptedAt == null}">zatím nepotvrzeno</strong>
+            </p>
+            <p>
+                Marketing:
+                <strong th:if="${currentUser.marketingConsent}">zapnutý</strong>
+                <strong th:if="${!currentUser.marketingConsent}">vypnutý</strong>
+            </p>
+        </div>
+
+        <details class="rounded-xl border border-slate-200">
+            <summary class="cursor-pointer px-4 py-3 font-semibold text-slate-800">Zobrazit obchodní podmínky</summary>
+            <div class="max-h-80 overflow-y-auto px-4 py-3 border-t border-slate-100">
+                <div th:replace="~{legal/vop :: document}"></div>
+            </div>
+        </details>
+        <details class="rounded-xl border border-slate-200">
+            <summary class="cursor-pointer px-4 py-3 font-semibold text-slate-800">Zobrazit informace o zpracování osobních údajů</summary>
+            <div class="max-h-80 overflow-y-auto px-4 py-3 border-t border-slate-100">
+                <div th:replace="~{legal/privacy :: document}"></div>
+            </div>
+        </details>
+        <p class="text-xs text-slate-500">Samostatné stránky: <a href="/vop" target="_blank" class="text-blue-600 underline">VOP</a> a <a href="/privacy" target="_blank" class="text-blue-600 underline">GDPR</a>.</p>
+
+        <form th:action="@{/settings/consents}" method="post" class="space-y-3 rounded-xl bg-slate-50 border border-slate-200 p-4">
+            <label class="flex items-start gap-2 text-sm text-slate-800">
+                <input type="checkbox" name="acceptTerms" value="true" th:checked="${currentUser.termsAccepted}" class="mt-1 h-4 w-4">
+                <span>Potvrzuji obchodní podmínky. Bez nich službu používat nejde. Odvolání znamená smazání účtu.</span>
+            </label>
+            <label class="flex items-start gap-2 text-sm text-slate-800">
+                <input type="checkbox" name="acceptPrivacy" value="true" th:checked="${currentUser.privacyAccepted}" class="mt-1 h-4 w-4">
+                <span>Potvrzuji, že jsem se seznámil s informacemi o zpracování osobních údajů.</span>
+            </label>
+            <label class="flex items-start gap-2 text-sm text-slate-800">
+                <input type="checkbox" name="marketingConsent" value="true" th:checked="${currentUser.marketingConsent}" class="mt-1 h-4 w-4">
+                <span>Chci novinky e-mailem. Odškrtnutím souhlas odvolám, účet zůstane.</span>
+            </label>
+            <button type="submit" class="bg-slate-900 text-white text-sm font-semibold px-4 py-2 rounded-xl">Uložit souhlasy</button>
+        </form>
+
+        <div class="space-y-2 text-sm text-slate-600">
+            <p class="font-semibold text-slate-800">Co s údaji děláme</p>
+            <ul class="list-disc pl-5 space-y-1">
+                <li>Účet, faktury, kontakty a sklad držíme, abychom plnili smlouvu.</li>
+                <li>IČO ověřujeme v ARES, jen když o to požádáš při registraci.</li>
+                <li>Placený plán jde přes Stripe. Číslo karty si neukládáme.</li>
+                <li>Heslo a tajemství dvoufázového ověření se do exportu nedávají.</li>
+            </ul>
+            <a href="/settings/export" class="inline-flex mt-2 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-xl">Stáhnout moje údaje (JSON)</a>
+        </div>
+    </section>
+
+    <section class="max-w-2xl mx-auto mt-6 bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8 space-y-4">
+        <div>
+            <h2 class="text-xl font-black text-slate-900">Import a export faktur</h2>
+            <p class="text-sm text-slate-500 mt-1">Když chceš odejít nebo změnit službu, stáhni si doklady. Stejný soubor jde později nahrát zpět. Stejné číslo dokladu se podruhé nezaloží. Doklady vystavené v tomto měsíci čerpají limit Free plánu, starší ne.</p>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-3">
+            <a href="/invoices/export" class="inline-flex justify-center px-4 py-2 bg-slate-900 text-white text-sm font-semibold rounded-xl">Exportovat faktury</a>
+        </div>
+        <form th:action="@{/invoices/import}" method="post" enctype="multipart/form-data" class="flex flex-col sm:flex-row gap-2 sm:items-center">
+            <input type="hidden" name="next" value="settings">
+            <input type="file" name="file" accept="application/json,.json" required class="text-sm text-slate-600">
+            <button type="submit" class="px-4 py-2 bg-white border border-slate-300 text-slate-800 text-sm font-semibold rounded-xl">Importovat faktury</button>
+        </form>
+    </section>
+
+    <section class="max-w-2xl mx-auto mt-6 bg-white rounded-2xl shadow-sm border border-rose-200 p-6 sm:p-8 space-y-4">
+        <div>
+            <h2 class="text-xl font-black text-rose-800">Smazat účet</h2>
+            <p class="text-sm text-slate-600 mt-1">Výmaz smaže přihlášení, faktury, kontakty, sklad a záznam předplatného. Nejdřív si stáhni export. Akci nejde vrátit. Doklady, které musíš archivovat kvůli daním, si nech u sebe.</p>
+        </div>
+        <form th:action="@{/settings/delete}" method="post" class="space-y-3" onsubmit="return confirm('Smazat účet a všechna uložená data?');">
+            <label class="block text-sm font-bold text-slate-700" for="delete-password">Heslo pro potvrzení</label>
+            <input id="delete-password" type="password" name="password" required autocomplete="current-password" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm">
+            <button type="submit" class="bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold px-4 py-2 rounded-xl">Smazat účet a data</button>
+        </form>
+    </section>
 </main>
 
 <div th:replace="~{fragments/footer :: main-footer}"></div>
