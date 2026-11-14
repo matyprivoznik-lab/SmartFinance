@@ -53,6 +53,31 @@ public class EmailService {
         }
     }
 
+    public void sendPlain(String toEmail, String subject, String text) {
+        if (toEmail == null || toEmail.isBlank()) {
+            return;
+        }
+        if (resendApiKey.isEmpty()) {
+            System.out.println(">> [SIMULACE RESEND API] " + subject + " pro " + toEmail);
+            return;
+        }
+        try {
+            restClient.post()
+                    .uri("https://api.resend.com/emails")
+                    .header("Authorization", "Bearer " + resendApiKey)
+                    .header("Content-Type", "application/json")
+                    .body(java.util.Map.of(
+                            "from", from,
+                            "to", new String[]{toEmail},
+                            "subject", subject,
+                            "text", text == null ? "" : text))
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (Exception ex) {
+            System.err.println(">> Chyba při odesílání e-mailu: " + ex.getMessage());
+        }
+    }
+
     public void sendVerificationCode(String toEmail, String code) {
         String text = "Dobrý den,\n\nověřovací kód pro MiniFakturu je " + code
                 + ".\nPlatí 15 minut. Pokud jsi účet nezakládal, e-mail ignoruj.\n";

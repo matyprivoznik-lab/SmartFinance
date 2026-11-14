@@ -5,15 +5,20 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import cz.document.DocumentKind;
+import cz.document.PublicLinks;
 import cz.document.VatRegime;
 import cz.entity.Client;
+import cz.entity.Company;
 import cz.entity.Invoice;
 import cz.entity.InvoiceItem;
 import cz.entity.User;
 import cz.repository.AccessEventRepository;
 import cz.repository.ClientRepository;
+import cz.repository.CompanyRepository;
+import cz.repository.ExpenseRepository;
 import cz.repository.InvoiceRepository;
 import cz.repository.ProductRepository;
+import cz.repository.RecurringTemplateRepository;
 import cz.repository.SubscriptionRepository;
 import cz.repository.UserRepository;
 import org.springframework.stereotype.Service;
@@ -40,6 +45,10 @@ public class DataRightsService {
     private final PlanQuotaService planQuotaService;
     private final ObjectMapper objectMapper;
     private final AccessEventRepository accessEventRepository;
+    private final CompanyRepository companyRepository;
+    private final ExpenseRepository expenseRepository;
+    private final RecurringTemplateRepository recurringTemplateRepository;
+    private final CompanyService companyService;
 
     public DataRightsService(InvoiceRepository invoiceRepository,
                              ClientRepository clientRepository,
@@ -48,7 +57,11 @@ public class DataRightsService {
                              UserRepository userRepository,
                              PlanQuotaService planQuotaService,
                              ObjectMapper objectMapper,
-                             AccessEventRepository accessEventRepository) {
+                             AccessEventRepository accessEventRepository,
+                             CompanyRepository companyRepository,
+                             ExpenseRepository expenseRepository,
+                             RecurringTemplateRepository recurringTemplateRepository,
+                             CompanyService companyService) {
         this.invoiceRepository = invoiceRepository;
         this.clientRepository = clientRepository;
         this.productRepository = productRepository;
@@ -57,6 +70,10 @@ public class DataRightsService {
         this.planQuotaService = planQuotaService;
         this.objectMapper = objectMapper;
         this.accessEventRepository = accessEventRepository;
+        this.companyRepository = companyRepository;
+        this.expenseRepository = expenseRepository;
+        this.recurringTemplateRepository = recurringTemplateRepository;
+        this.companyService = companyService;
     }
 
     @Transactional(readOnly = true)
@@ -128,6 +145,8 @@ public class DataRightsService {
 
             Invoice invoice = new Invoice();
             invoice.setUser(user);
+            invoice.setCompany(companyService.ensure(user));
+            PublicLinks.ensure(invoice);
             invoice.setInvoiceNumber(invoiceNumber);
             invoice.setVariableSymbol(text(node, "variableSymbol"));
             invoice.setConstantSymbol(text(node, "constantSymbol"));
@@ -199,8 +218,11 @@ public class DataRightsService {
         }
         invoiceRepository.deleteAll(invoices);
         invoiceRepository.flush();
+        recurringTemplateRepository.deleteAll(recurringTemplateRepository.findByUserOrderByNextIssueDateAsc(managed));
+        expenseRepository.deleteAll(expenseRepository.findByUser(managed));
         clientRepository.deleteAll(clientRepository.findByUser(managed));
         productRepository.deleteAll(productRepository.findByUser(managed));
+        companyRepository.deleteAll(companyRepository.findByOwnerOrderByIdAsc(managed));
         subscriptionRepository.findByUser(managed).ifPresent(subscriptionRepository::delete);
         accessEventRepository.detachUser(managed);
         userRepository.delete(managed);
@@ -376,6 +398,7 @@ public class DataRightsService {
         }
         Client created = new Client();
         created.setUser(user);
+        created.setCompany(companyService.ensure(user));
         created.setName(name.trim());
         created.setIco(blankToNull(ico));
         created.setVatNumber(blankToNull(text(clientNode, "vatNumber")));

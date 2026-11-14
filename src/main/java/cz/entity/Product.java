@@ -20,6 +20,10 @@ public class Product {
     private String unit;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "company_id")
+    private Company company;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
 
@@ -56,6 +60,9 @@ public class Product {
     public void setUnit(String unit) {
         this.unit = unit;
     }
+
+    public Company getCompany() { return company; }
+    public void setCompany(Company company) { this.company = company; }
 
     public User getUser() {
         return user;

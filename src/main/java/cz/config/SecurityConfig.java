@@ -43,6 +43,7 @@ public class SecurityConfig {
                             "/vop", "/privacy",
                             "/css/**", "/js/**", "/images/**", "/favicon.ico",
                             "/billing/webhook",
+                            "/p/**",
                             "/error"
                     ).permitAll();
                     auth.anyRequest().authenticated();

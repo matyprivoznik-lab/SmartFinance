@@ -18,6 +18,15 @@ public class Client {
     private String address;
     private String email;
     private String phone;
+    private String riskInsolvency;
+    @Column(length = 300)
+    private String riskInsolvencyDetail;
+    private Boolean riskUnreliableVat;
+    private java.time.LocalDateTime riskCheckedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "company_id")
+    private Company company;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
@@ -83,6 +92,17 @@ public class Client {
     public void setPhone(String phone) {
         this.phone = phone;
     }
+
+    public String getRiskInsolvency() { return riskInsolvency; }
+    public void setRiskInsolvency(String riskInsolvency) { this.riskInsolvency = riskInsolvency; }
+    public String getRiskInsolvencyDetail() { return riskInsolvencyDetail; }
+    public void setRiskInsolvencyDetail(String riskInsolvencyDetail) { this.riskInsolvencyDetail = riskInsolvencyDetail; }
+    public Boolean getRiskUnreliableVat() { return riskUnreliableVat; }
+    public void setRiskUnreliableVat(Boolean riskUnreliableVat) { this.riskUnreliableVat = riskUnreliableVat; }
+    public java.time.LocalDateTime getRiskCheckedAt() { return riskCheckedAt; }
+    public void setRiskCheckedAt(java.time.LocalDateTime riskCheckedAt) { this.riskCheckedAt = riskCheckedAt; }
+    public Company getCompany() { return company; }
+    public void setCompany(Company company) { this.company = company; }
 
     public User getUser() {
         return user;

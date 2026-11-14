@@ -6,6 +6,7 @@ import cz.repository.UserRepository;
 import cz.document.DocumentNumbers;
 import cz.service.AresService;
 import cz.service.AuditService;
+import cz.service.CompanyService;
 import cz.service.DataRightsService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -34,21 +35,24 @@ public class SettingsController {
     private final PasswordEncoder passwordEncoder;
     private final AresService aresService;
     private final AuditService auditService;
+    private final CompanyService companyService;
 
     public SettingsController(UserRepository userRepository,
                               DataRightsService dataRightsService,
                               PasswordEncoder passwordEncoder,
                               AresService aresService,
-                              AuditService auditService) {
+                              AuditService auditService,
+                              CompanyService companyService) {
         this.userRepository = userRepository;
         this.dataRightsService = dataRightsService;
         this.passwordEncoder = passwordEncoder;
         this.aresService = aresService;
         this.auditService = auditService;
+        this.companyService = companyService;
     }
 
     @GetMapping
-    public String showSettings(Model model, Principal principal) {
+    public String showSettings(Model model, Principal principal, HttpServletRequest request) {
         if (principal == null) {
             return "redirect:/login";
         }
@@ -58,6 +62,8 @@ public class SettingsController {
 
         model.addAttribute("currentUser", user);
         model.addAttribute("user", user);
+        model.addAttribute("companyList", companyService.list(user));
+        model.addAttribute("activeCompany", companyService.current(user, request));
         return "settings";
     }
 
@@ -70,7 +76,11 @@ public class SettingsController {
                                  @RequestParam(required = false) Double expenseRate,
                                  @RequestParam(value = "vatPayer", required = false) Boolean vatPayer,
                                  @RequestParam(required = false) String invoiceNumberPattern,
+                                 @RequestParam(value = "remindersEnabled", required = false) Boolean remindersEnabled,
+                                 @RequestParam(required = false) Integer gentleReminderDays,
+                                 @RequestParam(required = false) Integer formalReminderDays,
                                  Principal principal,
+                                 HttpServletRequest request,
                                  RedirectAttributes redirectAttributes) {
         if (principal == null) {
             return "redirect:/login";
@@ -101,6 +111,8 @@ public class SettingsController {
         }
 
         userRepository.save(currentUser);
+        companyService.mirrorFromUser(currentUser, request);
+        companyService.updateReminders(currentUser, request, Boolean.TRUE.equals(remindersEnabled), gentleReminderDays, formalReminderDays);
 
         redirectAttributes.addFlashAttribute("successMessage", "Daňové volby byly uloženy. Údaje z ARES zůstávají beze změny.");
         return "redirect:/settings?success";
@@ -129,6 +141,7 @@ public class SettingsController {
 
         AresService.applyTo(currentUser, data);
         userRepository.save(currentUser);
+        companyService.mirrorFromUser(currentUser, request);
         auditService.record(request, currentUser, currentUser.getEmail(), AccessEvent.Type.ARES_REFRESH,
                 "IČO " + data.getIco());
         redirectAttributes.addFlashAttribute("successMessage",

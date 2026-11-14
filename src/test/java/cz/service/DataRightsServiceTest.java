@@ -165,7 +165,7 @@ class DataRightsServiceTest {
         RedirectAttributesModelMap redirects = new RedirectAttributesModelMap();
         String email = user.getEmail();
         settingsController.updateSettings("Nové jméno", "00000001", null, "Jiná 2", true, 60.0, false, null,
-                () -> email, redirects);
+                null, null, null, () -> email, null, redirects);
 
         User reloaded = userRepository.findByEmail(email).orElseThrow();
         assertEquals("27074358", reloaded.getIco());
@@ -316,7 +316,7 @@ class DataRightsServiceTest {
         assertEquals("Nová 9, Brno", newer.getSupplierAddress());
         assertEquals("CZ99999999", newer.getSupplierVatNumber());
 
-        settingsController.updateSettings("Ruční", "00000001", "CZ1", "Falešná 1", true, 60.0, false, "RRRR-CCC", () -> email, redirects);
+        settingsController.updateSettings("Ruční", "00000001", "CZ1", "Falešná 1", true, 60.0, false, "RRRR-CCC", null, null, null, () -> email, null, redirects);
         User locked = userRepository.findByEmail(email).orElseThrow();
         assertEquals("Nový název s.r.o.", locked.getName());
         assertEquals("Nová 9, Brno", locked.getAddress());

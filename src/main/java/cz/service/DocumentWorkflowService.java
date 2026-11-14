@@ -2,6 +2,7 @@ package cz.service;
 
 import cz.document.DocumentKind;
 import cz.document.DocumentPricing;
+import cz.document.PublicLinks;
 import cz.document.VatRegime;
 import cz.entity.Invoice;
 import cz.entity.InvoiceItem;
@@ -44,6 +45,8 @@ public class DocumentWorkflowService {
         LocalDate today = LocalDate.now(ZONE);
         Invoice created = new Invoice();
         created.setUser(user);
+        created.setCompany(source.getCompany());
+        PublicLinks.ensure(created);
         created.setDocumentKind(target);
         created.setSourceDocument(source);
         created.setClient(source.getClient());
@@ -61,7 +64,7 @@ public class DocumentWorkflowService {
         created.setTaxableSupplyDate(today);
         created.setDueDate(today.plusDays(14));
         created.setStatus(Invoice.InvoiceStatus.ISSUED);
-        created.setInvoiceNumber(documentNumberService.next(user, target, today));
+        created.setInvoiceNumber(documentNumberService.next(user, source.getCompany(), target, today));
         created.setVariableSymbol(digits(created.getInvoiceNumber()));
 
         if (source.getItems() != null) {

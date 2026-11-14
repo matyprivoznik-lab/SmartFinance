@@ -22,6 +22,8 @@ public class TaxService {
     public TaxSummary calculateTaxSummary(User user, int year, boolean isStudent, boolean isEmployed) {
         List<Invoice> userInvoices = invoiceRepository.findAll().stream()
                 .filter(inv -> inv.getUser() != null && inv.getUser().getId().equals(user.getId()))
+                .filter(inv -> inv.getCompany() == null || user.getIco() == null || inv.getCompany().getIco() == null
+                        || user.getIco().equals(inv.getCompany().getIco()))
                 .filter(inv -> inv.getIssueDate() != null && inv.getIssueDate().getYear() == year)
                 .toList();
 

@@ -2,6 +2,7 @@ package cz.repository;
 
 import cz.document.DocumentKind;
 import cz.entity.Client;
+import cz.entity.Company;
 import cz.entity.Invoice;
 import cz.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,6 +16,10 @@ import java.util.Optional;
 @Repository
 public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
     List<Invoice> findByUser(User user);
+
+    List<Invoice> findByCompany(Company company);
+
+    Optional<Invoice> findByPublicToken(String publicToken);
     List<Invoice> findByClient(Client client);
 
     List<Invoice> findByUserEmail(String email);

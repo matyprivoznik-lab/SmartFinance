@@ -29,6 +29,10 @@ public class RecurringTemplate {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "company_id")
+    private Company company;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
@@ -53,6 +57,8 @@ public class RecurringTemplate {
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+    public Company getCompany() { return company; }
+    public void setCompany(Company company) { this.company = company; }
     public User getUser() { return user; }
     public void setUser(User user) { this.user = user; }
     public Client getClient() { return client; }

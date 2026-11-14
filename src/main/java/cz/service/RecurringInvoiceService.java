@@ -2,6 +2,7 @@ package cz.service;
 
 import cz.document.DocumentKind;
 import cz.document.DocumentPricing;
+import cz.document.PublicLinks;
 import cz.document.VatRegime;
 import cz.entity.Invoice;
 import cz.entity.InvoiceItem;
@@ -52,6 +53,8 @@ public class RecurringInvoiceService {
             LocalDate issueDate = template.getNextIssueDate() == null ? date : template.getNextIssueDate();
             Invoice invoice = new Invoice();
             invoice.setUser(user);
+            invoice.setCompany(template.getCompany());
+            PublicLinks.ensure(invoice);
             invoice.setDocumentKind(DocumentKind.INVOICE);
             invoice.setClient(template.getClient());
             invoice.captureSupplier(user);
@@ -64,7 +67,7 @@ public class RecurringInvoiceService {
             invoice.setTaxableSupplyDate(issueDate);
             invoice.setDueDate(issueDate.plusDays(14));
             invoice.setStatus(Invoice.InvoiceStatus.ISSUED);
-            invoice.setInvoiceNumber(documentNumberService.next(user, DocumentKind.INVOICE, issueDate));
+            invoice.setInvoiceNumber(documentNumberService.next(user, template.getCompany(), DocumentKind.INVOICE, issueDate));
             invoice.setVariableSymbol(invoice.getInvoiceNumber() == null ? null : invoice.getInvoiceNumber().replaceAll("\\D", ""));
             InvoiceItem item = new InvoiceItem();
             item.setDescription(template.getDescription() == null ? template.getTitle() : template.getDescription());

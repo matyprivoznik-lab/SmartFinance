@@ -1,8 +1,13 @@
 package cz.config;
 
+import cz.entity.Company;
 import cz.entity.User;
 import cz.repository.UserRepository;
+import cz.service.CompanyService;
 import cz.service.PlanQuotaService;
+import jakarta.servlet.http.HttpServletRequest;
+
+import java.util.List;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -14,10 +19,30 @@ public class PlanModelAdvice {
 
     private final UserRepository userRepository;
     private final PlanQuotaService planQuotaService;
+    private final CompanyService companyService;
 
-    public PlanModelAdvice(UserRepository userRepository, PlanQuotaService planQuotaService) {
+    public PlanModelAdvice(UserRepository userRepository, PlanQuotaService planQuotaService, CompanyService companyService) {
         this.userRepository = userRepository;
         this.planQuotaService = planQuotaService;
+        this.companyService = companyService;
+    }
+
+    @ModelAttribute("companies")
+    public List<Company> companies(HttpServletRequest request) {
+        User user = currentUser();
+        if (user == null) {
+            return List.of();
+        }
+        return companyService.list(user);
+    }
+
+    @ModelAttribute("activeCompany")
+    public Company activeCompany(HttpServletRequest request) {
+        User user = currentUser();
+        if (user == null) {
+            return null;
+        }
+        return companyService.current(user, request);
     }
 
     @ModelAttribute("planTheme")

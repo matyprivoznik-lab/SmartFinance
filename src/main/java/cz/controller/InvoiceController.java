@@ -2,7 +2,9 @@ package cz.controller;
 
 import cz.document.DocumentKind;
 import cz.document.DocumentPricing;
+import cz.document.PublicLinks;
 import cz.document.VatRegime;
+import cz.entity.Company;
 import cz.entity.Client;
 import cz.entity.Invoice;
 import cz.entity.Product;
@@ -14,11 +16,13 @@ import cz.repository.ProductRepository;
 import cz.repository.RecurringTemplateRepository;
 import cz.repository.UserRepository;
 import cz.service.CnbExchangeRateService;
+import cz.service.CompanyService;
 import cz.service.DataRightsService;
 import cz.service.DocumentNumberService;
 import cz.service.DocumentWorkflowService;
 import cz.service.PlanQuotaService;
 import cz.service.QrPaymentService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.http.HttpHeaders;
@@ -49,6 +53,7 @@ public class InvoiceController {
     private final DocumentWorkflowService documentWorkflowService;
     private final CnbExchangeRateService cnbExchangeRateService;
     private final RecurringTemplateRepository recurringTemplateRepository;
+    private final CompanyService companyService;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -63,7 +68,8 @@ public class InvoiceController {
                              DocumentNumberService documentNumberService,
                              DocumentWorkflowService documentWorkflowService,
                              CnbExchangeRateService cnbExchangeRateService,
-                             RecurringTemplateRepository recurringTemplateRepository) {
+                             RecurringTemplateRepository recurringTemplateRepository,
+                             CompanyService companyService) {
         this.invoiceRepository = invoiceRepository;
         this.clientRepository = clientRepository;
         this.productRepository = productRepository;
@@ -75,16 +81,18 @@ public class InvoiceController {
         this.documentWorkflowService = documentWorkflowService;
         this.cnbExchangeRateService = cnbExchangeRateService;
         this.recurringTemplateRepository = recurringTemplateRepository;
+        this.companyService = companyService;
     }
 
     @GetMapping("/invoices")
-    public String showInvoices(@AuthenticationPrincipal UserDetails userDetails, Model model) {
+    public String showInvoices(@AuthenticationPrincipal UserDetails userDetails, HttpServletRequest request, Model model) {
         if (userDetails == null) {
             return "redirect:/login";
         }
 
         User currentUser = userRepository.findByEmail(userDetails.getUsername()).orElse(null);
-        List<Invoice> invoices = invoiceRepository.findByUser(currentUser);
+        Company company = companyService.current(currentUser, request);
+        List<Invoice> invoices = invoiceRepository.findByCompany(company);
 
         model.addAttribute("invoices", invoices);
         model.addAttribute("activePage", "invoices");
@@ -94,6 +102,7 @@ public class InvoiceController {
     @GetMapping("/invoices/new")
     public String showCreateInvoiceForm(@RequestParam(value = "kind", required = false) DocumentKind kind,
                                         @AuthenticationPrincipal UserDetails userDetails,
+                                        HttpServletRequest request,
                                         Model model,
                                         RedirectAttributes redirectAttributes) {
         if (userDetails == null) {
@@ -113,11 +122,12 @@ public class InvoiceController {
             return "redirect:/billing";
         }
 
-        List<Client> clients = clientRepository.findByUser(currentUser);
-        List<Product> products = productRepository.findByUser(currentUser);
+        Company company = companyService.current(currentUser, request);
+        List<Client> clients = clientRepository.findByCompany(company);
+        List<Product> products = productRepository.findByCompany(company);
 
         LocalDate now = LocalDate.now();
-        String generatedNumber = documentNumberService.next(currentUser, documentKind, now);
+        String generatedNumber = documentNumberService.next(currentUser, company, documentKind, now);
 
         Invoice newInvoice = new Invoice();
         newInvoice.setDocumentKind(documentKind);
@@ -141,6 +151,7 @@ public class InvoiceController {
     @GetMapping("/invoices/{id}")
     public String showInvoiceDetail(@PathVariable("id") Long id,
                                     @AuthenticationPrincipal UserDetails userDetails,
+                                    HttpServletRequest request,
                                     Model model) {
         if (userDetails == null) {
             return "redirect:/login";
@@ -149,8 +160,10 @@ public class InvoiceController {
         User currentUser = userRepository.findByEmail(userDetails.getUsername()).orElse(null);
         Invoice invoice = invoiceRepository.findById(id).orElse(null);
 
+        Company company = companyService.current(currentUser, request);
         if (invoice == null || currentUser == null || invoice.getUser() == null
-                || !invoice.getUser().getId().equals(currentUser.getId())) {
+                || !invoice.getUser().getId().equals(currentUser.getId())
+                || (invoice.getCompany() != null && company != null && !invoice.getCompany().getId().equals(company.getId()))) {
             return "redirect:/invoices";
         }
 
@@ -166,6 +179,7 @@ public class InvoiceController {
     public String saveInvoice(@ModelAttribute Invoice invoice,
                               @RequestParam(value = "clientId", required = false) Long clientId,
                               @AuthenticationPrincipal UserDetails userDetails,
+                              HttpServletRequest request,
                               RedirectAttributes redirectAttributes) {
         if (userDetails == null) {
             return "redirect:/login";
@@ -196,13 +210,16 @@ public class InvoiceController {
         }
 
         invoice.setUser(currentUser);
+        Company company = companyService.current(currentUser, request);
         Client postedClient = invoice.getClient();
         if (isNew) {
+            invoice.setCompany(company);
+            PublicLinks.ensure(invoice);
             invoice.captureSupplier(currentUser);
-            invoice.setClient(resolveClient(currentUser, clientId, postedClient));
+            invoice.setClient(resolveClient(currentUser, company, clientId, postedClient));
             invoice.captureCustomer(invoice.getClient());
             if (invoice.getInvoiceNumber() == null || invoice.getInvoiceNumber().isBlank()) {
-                invoice.setInvoiceNumber(documentNumberService.next(currentUser, invoice.getDocumentKind(), invoice.getIssueDate()));
+                invoice.setInvoiceNumber(documentNumberService.next(currentUser, company, invoice.getDocumentKind(), invoice.getIssueDate()));
             }
         } else {
             Invoice stored = invoiceRepository.findById(invoice.getId()).orElse(null);
@@ -212,11 +229,16 @@ public class InvoiceController {
             }
             invoice.copySupplierFrom(stored);
             invoice.copyCustomerFrom(stored);
+            invoice.setCompany(stored.getCompany());
+            invoice.setPublicToken(stored.getPublicToken());
+            invoice.setPaidAt(stored.getPaidAt());
+            invoice.setGentleReminderSentAt(stored.getGentleReminderSentAt());
+            invoice.setFormalReminderSentAt(stored.getFormalReminderSentAt());
             invoice.setDocumentKind(stored.getDocumentKind());
             invoice.setSourceDocument(stored.getSourceDocument());
             Client keptClient = stored.getClient();
             entityManager.detach(stored);
-            invoice.setClient(clientId == null ? keptClient : resolveClient(currentUser, clientId, null));
+            invoice.setClient(clientId == null ? keptClient : resolveClient(currentUser, company, clientId, null));
         }
 
         if (invoice.getTaxableSupplyDate() == null) {
@@ -258,13 +280,14 @@ public class InvoiceController {
     }
 
     @GetMapping("/invoices/recurring")
-    public String recurring(@AuthenticationPrincipal UserDetails userDetails, Model model) {
+    public String recurring(@AuthenticationPrincipal UserDetails userDetails, HttpServletRequest request, Model model) {
         User currentUser = currentUser(userDetails);
         if (currentUser == null) {
             return "redirect:/login";
         }
-        model.addAttribute("templates", recurringTemplateRepository.findByUserOrderByNextIssueDateAsc(currentUser));
-        model.addAttribute("clients", clientRepository.findByUser(currentUser));
+        Company company = companyService.current(currentUser, request);
+        model.addAttribute("templates", recurringTemplateRepository.findByCompanyOrderByNextIssueDateAsc(company));
+        model.addAttribute("clients", clientRepository.findByCompany(company));
         model.addAttribute("vatRegimes", VatRegime.values());
         model.addAttribute("activePage", "invoices");
         return "recurring";
@@ -281,6 +304,7 @@ public class InvoiceController {
                                 @RequestParam(defaultValue = "MONTHLY") RecurringTemplate.Interval interval,
                                 @RequestParam LocalDate nextIssueDate,
                                 @AuthenticationPrincipal UserDetails userDetails,
+                                HttpServletRequest request,
                                 RedirectAttributes redirectAttributes) {
         User currentUser = currentUser(userDetails);
         if (currentUser == null) {
@@ -290,9 +314,11 @@ public class InvoiceController {
             redirectAttributes.addFlashAttribute("errorMessage", "Šablona potřebuje název, popis a cenu.");
             return "redirect:/invoices/recurring";
         }
+        Company company = companyService.current(currentUser, request);
         RecurringTemplate template = new RecurringTemplate();
         template.setUser(currentUser);
-        template.setClient(resolveClient(currentUser, clientId, null));
+        template.setCompany(company);
+        template.setClient(resolveClient(currentUser, company, clientId, null));
         template.setTitle(title.trim());
         template.setDescription(description.trim());
         template.setQuantity(quantity == null ? 1.0 : quantity);
@@ -370,16 +396,18 @@ public class InvoiceController {
         return userRepository.findByEmail(userDetails.getUsername()).orElse(null);
     }
 
-    private Client resolveClient(User user, Long clientId, Client posted) {
+    private Client resolveClient(User user, Company company, Long clientId, Client posted) {
         Client client = null;
         if (clientId != null) {
             client = clientRepository.findById(clientId)
                     .filter(found -> found.getUser() != null && found.getUser().getId().equals(user.getId()))
+                    .filter(found -> found.getCompany() == null || company == null || found.getCompany().getId().equals(company.getId()))
                     .orElse(null);
         }
         if (client == null && posted != null && posted.getName() != null && !posted.getName().isBlank()) {
             client = new Client();
             client.setUser(user);
+            client.setCompany(company);
         }
         if (client == null || posted == null) {
             return client;

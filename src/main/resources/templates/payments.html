@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="cs">
+<head>
+    <title>Platby - MiniFaktura</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 min-h-screen">
+<div th:replace="~{fragments/header :: main-header}"></div>
+<main class="max-w-3xl mx-auto px-4 py-8 space-y-6">
+    <h1 class="text-2xl font-black text-slate-900">Párování plateb</h1>
+    <p class="text-sm text-slate-500">CSV má sloupce datum, částka a variabilní symbol. Shoda je na symbol a částku s tolerancí 50 haléřů. Uhrazená záloha založí vyúčtovací fakturu.</p>
+    <div th:if="${successMessage}" class="bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm p-4 rounded-xl" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="bg-rose-50 border border-rose-200 text-rose-800 text-sm p-4 rounded-xl" th:text="${errorMessage}"></div>
+
+    <form th:action="@{/payments/import}" method="post" enctype="multipart/form-data" class="bg-white p-5 rounded-2xl border border-slate-200 space-y-3">
+        <h2 class="font-bold">Nahrát CSV</h2>
+        <input type="file" name="file" accept=".csv,text/csv" required class="text-sm">
+        <button class="bg-blue-600 text-white font-bold px-4 py-2 rounded-xl text-sm" type="submit">Spárovat</button>
+    </form>
+
+    <form th:action="@{/payments/fio-token}" method="post" class="bg-white p-5 rounded-2xl border border-slate-200 space-y-3">
+        <h2 class="font-bold">Token Fio API</h2>
+        <p class="text-xs text-slate-500">Token zůstává u firmy a nejde do exportu osobních údajů.</p>
+        <input type="password" name="fioApiToken" placeholder="Vlož token, prázdné pole ho smaže" class="w-full px-3 py-2 border rounded-xl text-sm">
+        <button class="bg-slate-900 text-white font-bold px-4 py-2 rounded-xl text-sm" type="submit">Uložit token</button>
+    </form>
+
+    <form th:action="@{/payments/fio}" method="post" class="bg-white p-5 rounded-2xl border border-slate-200 space-y-3">
+        <h2 class="font-bold">Stáhnout z Fio</h2>
+        <div class="grid grid-cols-2 gap-3">
+            <input type="date" name="from" required class="px-3 py-2 border rounded-xl text-sm">
+            <input type="date" name="to" required class="px-3 py-2 border rounded-xl text-sm">
+        </div>
+        <button class="bg-slate-900 text-white font-bold px-4 py-2 rounded-xl text-sm" type="submit">Načíst pohyby</button>
+    </form>
+</main>
+</body>
+</html>

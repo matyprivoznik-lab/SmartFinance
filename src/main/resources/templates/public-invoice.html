@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="cs">
+<head>
+    <title th:text="${invoice.invoiceNumber}">Doklad</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 min-h-screen">
+<main class="max-w-3xl mx-auto px-4 py-8">
+    <article class="bg-white rounded-2xl border border-slate-200 p-6 space-y-4">
+        <p class="text-xs uppercase tracking-wide text-slate-500" th:text="${invoice.documentKind != null ? invoice.documentKind.label : 'Faktura'}">Faktura</p>
+        <h1 class="text-2xl font-black" th:text="${invoice.invoiceNumber}">2026-001</h1>
+        <div class="grid sm:grid-cols-2 gap-4 text-sm">
+            <div>
+                <p class="font-bold" th:text="${invoice.supplierName}">Dodavatel</p>
+                <p th:text="${invoice.supplierAddress}"></p>
+                <p th:text="${invoice.supplierIco != null ? 'IČO ' + invoice.supplierIco : ''}"></p>
+            </div>
+            <div>
+                <p class="font-bold" th:text="${invoice.customerName}">Odběratel</p>
+                <p th:text="${invoice.customerAddress}"></p>
+                <p th:text="${invoice.customerIco != null ? 'IČO ' + invoice.customerIco : ''}"></p>
+            </div>
+        </div>
+        <p class="text-sm">Splatnost <span th:text="${invoice.dueDate}"></span> · stav <span th:text="${invoice.status}"></span></p>
+        <p class="text-2xl font-black text-blue-700" th:text="${#numbers.formatDecimal(invoice.grossTotal, 1, 'WHITESPACE', 2, 'POINT') + ' ' + invoice.currency}">0 CZK</p>
+        <img th:if="${qrCodeBase64 != null}" th:src="${qrCodeBase64}" alt="QR platba" class="w-40 h-40 border rounded-xl">
+        <p class="text-xs text-slate-400">Jen náhled. Údaje na dokladu se z tohohle odkazu nemění.</p>
+    </article>
+</main>
+</body>
+</html>

@@ -47,6 +47,22 @@
             </form>
         </section>
 
+        <section class="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
+            <h2 class="text-sm font-black text-slate-900">Firmy pod tímhle účtem</h2>
+            <p class="text-xs text-slate-500">Každá firma má vlastní doklady, kontakty, sklad, náklady a číselnou řadu. Limit faktur zůstává na celý účet.</p>
+            <ul class="text-sm space-y-1">
+                <li th:each="firm : ${companyList}">
+                    <span class="font-semibold" th:text="${firm.name}">Firma</span>
+                    <span class="text-slate-500" th:text="${firm.ico != null ? ' · IČO ' + firm.ico : ''}"></span>
+                    <span th:if="${activeCompany != null and activeCompany.id == firm.id}" class="text-emerald-700 text-xs font-bold"> aktivní</span>
+                </li>
+            </ul>
+            <form th:action="@{/companies}" method="post" class="flex gap-2">
+                <input type="text" name="ico" required placeholder="IČO další firmy" class="flex-1 px-3 py-2 rounded-xl border border-slate-300 text-sm">
+                <button type="submit" class="bg-slate-900 text-white text-sm font-bold px-4 rounded-xl">Přidat z ARES</button>
+            </form>
+        </section>
+
         <div th:if="${successMessage}" class="bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm p-4 rounded-xl font-medium" th:text="${successMessage}"></div>
         <div th:if="${errorMessage}" class="bg-rose-50 border border-rose-200 text-rose-800 text-sm p-4 rounded-xl font-medium" th:text="${errorMessage}"></div>
         <div th:if="${param.success != null and successMessage == null}" class="bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm p-4 rounded-xl font-medium">
@@ -105,6 +121,21 @@
                 <input type="text" name="invoiceNumberPattern" maxlength="24" th:value="${currentUser != null and currentUser.invoiceNumberPattern != null ? currentUser.invoiceNumberPattern : 'DRUHRRRRMM-CCC'}" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-mono">
                 <p class="text-xs text-slate-500">RRRR je rok, MM měsíc, CCC pořadí, DRUH je prázdné u faktury a Z, D, N nebo O u zálohy, dobropisu, nabídky a objednávky. Třeba RRRR-CCC nebo FVRRRRCCCC.</p>
             </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-100">
+                <div class="space-y-1.5">
+                    <label class="block text-sm font-bold text-slate-700">Jemná upomínka po dnech</label>
+                    <input type="number" name="gentleReminderDays" min="0" th:value="${activeCompany != null ? activeCompany.gentleReminderDays : 3}" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm">
+                </div>
+                <div class="space-y-1.5">
+                    <label class="block text-sm font-bold text-slate-700">Formální upomínka po dnech</label>
+                    <input type="number" name="formalReminderDays" min="0" th:value="${activeCompany != null ? activeCompany.formalReminderDays : 14}" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm">
+                </div>
+            </div>
+            <label class="inline-flex items-center gap-2 text-sm font-semibold text-slate-800">
+                <input type="checkbox" name="remindersEnabled" value="true" th:checked="${activeCompany == null or activeCompany.remindersEnabled}">
+                Posílat upomínky e-mailem
+            </label>
 
             <div class="pt-4 flex justify-end">
                 <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded-xl shadow transition text-sm">

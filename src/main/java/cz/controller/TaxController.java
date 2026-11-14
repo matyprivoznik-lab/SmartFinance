@@ -3,7 +3,9 @@ package cz.controller;
 import cz.entity.User;
 import cz.repository.InvoiceRepository;
 import cz.repository.UserRepository;
+import cz.service.CompanyService;
 import cz.service.TaxService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,11 +22,13 @@ public class TaxController {
     private final TaxService taxService;
     private final UserRepository userRepository;
     private final InvoiceRepository invoiceRepository;
+    private final CompanyService companyService;
 
-    public TaxController(TaxService taxService, UserRepository userRepository, InvoiceRepository invoiceRepository) {
+    public TaxController(TaxService taxService, UserRepository userRepository, InvoiceRepository invoiceRepository, CompanyService companyService) {
         this.taxService = taxService;
         this.userRepository = userRepository;
         this.invoiceRepository = invoiceRepository;
+        this.companyService = companyService;
     }
 
     /**
@@ -35,7 +39,8 @@ public class TaxController {
                                   @RequestParam(name = "isStudent", defaultValue = "false") boolean isStudent,
                                   @RequestParam(name = "isEmployed", defaultValue = "false") boolean isEmployed,
                                   Model model,
-                                  Principal principal) {
+                                  Principal principal,
+                                  HttpServletRequest request) {
         if (principal == null) {
             return "redirect:/login";
         }
@@ -47,7 +52,7 @@ public class TaxController {
 
         TaxService.TaxSummary taxSummary = taxService.calculateTaxSummary(user, selectedYear, isStudent, isEmployed);
 
-        long invoicesCount = invoiceRepository.findByUser(user).stream()
+        long invoicesCount = invoiceRepository.findByCompany(companyService.current(user, request)).stream()
                 .filter(inv -> inv.getIssueDate() != null && inv.getIssueDate().getYear() == selectedYear)
                 .count();
 

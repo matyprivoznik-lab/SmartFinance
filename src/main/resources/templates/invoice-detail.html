@@ -43,6 +43,10 @@
             </svg>
             Zpět na seznam faktur
         </a>
+        <p th:if="${invoice.publicToken != null}" class="text-xs text-slate-500">
+            Veřejný odkaz:
+            <a class="text-blue-700 font-semibold" th:href="@{'/p/' + ${invoice.publicToken}}" th:text="${'/p/' + invoice.publicToken}">/p/token</a>
+        </p>
 
         <div class="flex items-center space-x-3">
             <button onclick="window.print()"

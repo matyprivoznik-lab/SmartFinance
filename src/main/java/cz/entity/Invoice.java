@@ -25,6 +25,12 @@ public class Invoice {
 
     private LocalDate issueDate;
     private LocalDate dueDate;
+    private LocalDate paidAt;
+    private LocalDate gentleReminderSentAt;
+    private LocalDate formalReminderSentAt;
+
+    @Column(unique = true, length = 64)
+    private String publicToken;
 
     @Column(name = "duzp")
     private LocalDate taxableSupplyDate;
@@ -79,6 +85,10 @@ public class Invoice {
     private String customerVatNumber;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "company_id")
+    private Company company;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
 
@@ -116,6 +126,14 @@ public class Invoice {
 
     public LocalDate getDueDate() { return dueDate; }
     public void setDueDate(LocalDate dueDate) { this.dueDate = dueDate; }
+    public LocalDate getPaidAt() { return paidAt; }
+    public void setPaidAt(LocalDate paidAt) { this.paidAt = paidAt; }
+    public LocalDate getGentleReminderSentAt() { return gentleReminderSentAt; }
+    public void setGentleReminderSentAt(LocalDate gentleReminderSentAt) { this.gentleReminderSentAt = gentleReminderSentAt; }
+    public LocalDate getFormalReminderSentAt() { return formalReminderSentAt; }
+    public void setFormalReminderSentAt(LocalDate formalReminderSentAt) { this.formalReminderSentAt = formalReminderSentAt; }
+    public String getPublicToken() { return publicToken; }
+    public void setPublicToken(String publicToken) { this.publicToken = publicToken; }
 
     public LocalDate getTaxableSupplyDate() { return taxableSupplyDate; }
     public void setTaxableSupplyDate(LocalDate taxableSupplyDate) { this.taxableSupplyDate = taxableSupplyDate; }
@@ -255,6 +273,8 @@ public class Invoice {
         this.customerVatNumber = stored.customerVatNumber;
     }
 
+    public Company getCompany() { return company; }
+    public void setCompany(Company company) { this.company = company; }
     public User getUser() { return user; }
     public void setUser(User user) { this.user = user; }
 

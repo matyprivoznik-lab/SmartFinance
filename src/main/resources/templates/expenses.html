@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="cs">
+<head>
+    <title>Náklady - MiniFaktura</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 min-h-screen">
+<div th:replace="~{fragments/header :: main-header}"></div>
+<main class="max-w-4xl mx-auto px-4 py-8 space-y-6">
+    <h1 class="text-2xl font-black text-slate-900">Přijaté doklady</h1>
+    <form th:action="@{/expenses}" method="post" class="bg-white p-5 rounded-2xl border border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+        <input type="date" name="issueDate" class="px-3 py-2 border rounded-xl">
+        <input type="text" name="documentNumber" placeholder="Číslo dokladu" class="px-3 py-2 border rounded-xl">
+        <input type="text" name="supplierName" required placeholder="Dodavatel" class="px-3 py-2 border rounded-xl">
+        <input type="text" name="supplierIco" placeholder="IČO dodavatele" class="px-3 py-2 border rounded-xl">
+        <input type="number" step="0.01" name="netAmount" placeholder="Základ" class="px-3 py-2 border rounded-xl">
+        <input type="number" step="0.01" name="vatAmount" placeholder="DPH" class="px-3 py-2 border rounded-xl">
+        <input type="text" name="note" placeholder="Poznámka" class="px-3 py-2 border rounded-xl sm:col-span-2">
+        <button class="bg-blue-600 text-white font-bold px-4 py-2 rounded-xl sm:col-span-2" type="submit">Uložit náklad</button>
+    </form>
+    <table class="w-full bg-white rounded-2xl border border-slate-200 text-sm">
+        <thead class="text-left text-slate-500">
+        <tr>
+            <th class="p-3">Datum</th>
+            <th class="p-3">Dodavatel</th>
+            <th class="p-3">Doklad</th>
+            <th class="p-3 text-right">Částka</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="expense : ${expenses}" class="border-t">
+            <td class="p-3" th:text="${expense.issueDate}">2026-01-01</td>
+            <td class="p-3" th:text="${expense.supplierName}">Dodavatel</td>
+            <td class="p-3" th:text="${expense.documentNumber}">1</td>
+            <td class="p-3 text-right" th:text="${#numbers.formatDecimal(expense.grossTotal, 1, 'WHITESPACE', 2, 'POINT') + ' Kč'}">0 Kč</td>
+        </tr>
+        </tbody>
+    </table>
+</main>
+</body>
+</html>
