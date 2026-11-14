@@ -1,7 +1,11 @@
 package cz.controller;
 
+import cz.entity.AccessEvent;
 import cz.entity.User;
 import cz.repository.UserRepository;
+import cz.document.DocumentNumbers;
+import cz.service.AresService;
+import cz.service.AuditService;
 import cz.service.DataRightsService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -28,13 +32,19 @@ public class SettingsController {
     private final UserRepository userRepository;
     private final DataRightsService dataRightsService;
     private final PasswordEncoder passwordEncoder;
+    private final AresService aresService;
+    private final AuditService auditService;
 
     public SettingsController(UserRepository userRepository,
                               DataRightsService dataRightsService,
-                              PasswordEncoder passwordEncoder) {
+                              PasswordEncoder passwordEncoder,
+                              AresService aresService,
+                              AuditService auditService) {
         this.userRepository = userRepository;
         this.dataRightsService = dataRightsService;
         this.passwordEncoder = passwordEncoder;
+        this.aresService = aresService;
+        this.auditService = auditService;
     }
 
     @GetMapping
@@ -59,6 +69,7 @@ public class SettingsController {
                                  @RequestParam(required = false) Boolean mainActivity,
                                  @RequestParam(required = false) Double expenseRate,
                                  @RequestParam(value = "vatPayer", required = false) Boolean vatPayer,
+                                 @RequestParam(required = false) String invoiceNumberPattern,
                                  Principal principal,
                                  RedirectAttributes redirectAttributes) {
         if (principal == null) {
@@ -68,23 +79,60 @@ public class SettingsController {
         User currentUser = userRepository.findByEmail(principal.getName())
                 .orElseThrow(() -> new IllegalArgumentException("Uživatel nebyl nalezen."));
 
-        if (name != null && !name.isBlank()) {
-            currentUser.setName(name.trim());
+        if (differs(name, currentUser.getName())
+                || differs(ico, currentUser.getIco())
+                || differs(vatNumber, currentUser.getVatNumber())
+                || differs(address, currentUser.getAddress())) {
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Název, sídlo, IČO a DIČ jdou změnit jen novým načtením z ARES.");
         }
-        if (ico != null && currentUser.getIco() != null && !ico.trim().equals(currentUser.getIco())) {
-            redirectAttributes.addFlashAttribute("errorMessage", "IČO z registru ARES změnit nejde.");
-        }
-        currentUser.setVatNumber(vatNumber);
-        currentUser.setAddress(address);
         currentUser.setMainActivity(mainActivity == null || mainActivity);
         if (expenseRate != null) {
             currentUser.setExpenseRate(expenseRate);
         }
         currentUser.setVatPayer(Boolean.TRUE.equals(vatPayer));
+        if (invoiceNumberPattern == null || invoiceNumberPattern.isBlank()) {
+            currentUser.setInvoiceNumberPattern(null);
+        } else if (DocumentNumbers.isValid(invoiceNumberPattern.trim())) {
+            currentUser.setInvoiceNumberPattern(invoiceNumberPattern.trim());
+        } else {
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Formát čísla dokladu použij jako RRRR-CCC, FVRRRRCCCC nebo DRUHRRRRMM-CCC.");
+        }
 
         userRepository.save(currentUser);
 
-        redirectAttributes.addFlashAttribute("successMessage", "Profil a platební údaje byly úspěšně uloženy.");
+        redirectAttributes.addFlashAttribute("successMessage", "Daňové volby byly uloženy. Údaje z ARES zůstávají beze změny.");
+        return "redirect:/settings?success";
+    }
+
+    @PostMapping("/ares")
+    public String refreshFromAres(Principal principal,
+                                  HttpServletRequest request,
+                                  RedirectAttributes redirectAttributes) {
+        if (principal == null) {
+            return "redirect:/login";
+        }
+        User currentUser = userRepository.findByEmail(principal.getName())
+                .orElseThrow(() -> new IllegalArgumentException("Uživatel nebyl nalezen."));
+        String ico = AresService.normalizeIco(currentUser.getIco());
+        if (ico == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Účet nemá platné IČO, z ARES není co načíst.");
+            return "redirect:/settings";
+        }
+
+        AresService.AresResponse data = aresService.getCompanyDetails(ico);
+        if (data == null || data.getName() == null || data.getName().isBlank()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "ARES subjekt teď nenašel. Název a sídlo zůstávají beze změny.");
+            return "redirect:/settings";
+        }
+
+        AresService.applyTo(currentUser, data);
+        userRepository.save(currentUser);
+        auditService.record(request, currentUser, currentUser.getEmail(), AccessEvent.Type.ARES_REFRESH,
+                "IČO " + data.getIco());
+        redirectAttributes.addFlashAttribute("successMessage",
+                "Údaje z ARES jsou aktualizované. Už vystavené faktury si nechávají původní název, sídlo, IČO a DIČ.");
         return "redirect:/settings?success";
     }
 
@@ -155,6 +203,12 @@ public class SettingsController {
         dataRightsService.deleteAccount(currentUser);
         request.logout();
         return "redirect:/login?deleted";
+    }
+
+    private static boolean differs(String submitted, String stored) {
+        String left = submitted == null ? "" : submitted.trim();
+        String right = stored == null ? "" : stored.trim();
+        return !left.equals(right);
     }
 
     private static ResponseEntity<byte[]> jsonAttachment(byte[] body, String filename) {

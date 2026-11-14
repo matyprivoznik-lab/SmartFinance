@@ -76,13 +76,11 @@ public class AuthController {
 
         if (aresData != null && aresData.getName() != null) {
             User user = new User();
-            user.setIco(aresData.getIco());
-            user.setName(aresData.getName());
-            user.setAddress(aresData.getAddress());
+            AresService.applyTo(user, aresData);
 
             model.addAttribute("user", user);
             model.addAttribute("step", 2);
-            model.addAttribute("success", "Firma úspěšně ověřena v registru ARES. IČO, název a sídlo se berou z registru.");
+            model.addAttribute("success", "Firma úspěšně ověřena v registru ARES. IČO, název, sídlo a DIČ se berou z registru a ručně je změnit nejde.");
             return "register";
         } else {
             model.addAttribute("error", "Subjekt s tímto IČO nebyl v registru ARES nalezen.");
@@ -130,9 +128,7 @@ public class AuthController {
         LocalDateTime acceptedAt = LocalDateTime.now(ZoneId.of("Europe/Prague"));
         user.setId(null);
         user.setEmail(email);
-        user.setIco(aresData.getIco());
-        user.setName(aresData.getName());
-        user.setAddress(aresData.getAddress());
+        AresService.applyTo(user, aresData);
         user.setRole("ROLE_USER");
         user.setEnabled(true);
         user.setMfaEnabled(false);

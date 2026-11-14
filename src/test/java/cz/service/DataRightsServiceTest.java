@@ -164,13 +164,14 @@ class DataRightsServiceTest {
 
         RedirectAttributesModelMap redirects = new RedirectAttributesModelMap();
         String email = user.getEmail();
-        settingsController.updateSettings("Nové jméno", "00000001", null, "Jiná 2", true, 60.0, false,
+        settingsController.updateSettings("Nové jméno", "00000001", null, "Jiná 2", true, 60.0, false, null,
                 () -> email, redirects);
 
         User reloaded = userRepository.findByEmail(email).orElseThrow();
         assertEquals("27074358", reloaded.getIco());
-        assertEquals("Nové jméno", reloaded.getName());
-        assertEquals("IČO z registru ARES změnit nejde.", redirects.getFlashAttributes().get("errorMessage"));
+        assertEquals("Původní jméno", reloaded.getName());
+        assertEquals("", reloaded.getAddress());
+        assertEquals("Název, sídlo, IČO a DIČ jdou změnit jen novým načtením z ARES.", redirects.getFlashAttributes().get("errorMessage"));
 
         User admin = new User();
         admin.setEmail("admin-" + UUID.randomUUID() + "@example.com");
@@ -220,7 +221,11 @@ class DataRightsServiceTest {
         invoice.setNetAmount(2000.0);
         invoice.setVatAmount(420.0);
         invoice.setGrossTotal(2420.0);
+        invoice.captureSupplier(user);
         invoiceRepository.save(invoice);
+        user.setName("Po exportu");
+        user.setAddress("Nová adresa 9");
+        userRepository.save(user);
 
         byte[] exported = dataRightsService.exportPersonalData(user);
         String json = new String(exported);
@@ -243,6 +248,7 @@ class DataRightsServiceTest {
         assertEquals(1, imported.getItems().size());
         assertEquals("Konzultace", imported.getItems().get(0).getDescription());
         assertEquals(2420.0, imported.getGrossTotal(), 0.001);
+        assertEquals("Přenos Test", imported.getSupplierName());
 
         DataRightsService.ImportResult again = dataRightsService.importInvoices(user, exported);
         assertEquals(0, again.imported());
@@ -251,5 +257,71 @@ class DataRightsServiceTest {
         dataRightsService.deleteAccount(user);
         assertTrue(userRepository.findByEmail(user.getEmail()).isEmpty());
         assertTrue(invoiceRepository.findByUserEmail(user.getEmail()).isEmpty());
+    }
+
+    @Test
+    void aresRefreshUpdatesAccountAndLeavesIssuedInvoices() {
+        User user = new User();
+        user.setEmail("ares-" + UUID.randomUUID() + "@example.com");
+        user.setPassword(passwordEncoder.encode("heslo123"));
+        user.setName("Staré jméno");
+        user.setAddress("Stará 1, Praha");
+        user.setIco("27074358");
+        user.setVatNumber("CZ27074358");
+        user.setRole("ROLE_USER");
+        user.setEnabled(true);
+        user.setEmailVerified(true);
+        user = userRepository.save(user);
+
+        Invoice issued = new Invoice();
+        issued.setUser(user);
+        issued.setInvoiceNumber("SNAP-" + UUID.randomUUID());
+        issued.setIssueDate(LocalDate.of(2024, 1, 10));
+        issued.captureSupplier(user);
+        issued = invoiceRepository.save(issued);
+
+        String email = user.getEmail();
+        RedirectAttributesModelMap redirects = new RedirectAttributesModelMap();
+        when(aresService.getCompanyDetails("27074358")).thenReturn(null);
+        settingsController.refreshFromAres(() -> email, null, redirects);
+        assertEquals("Staré jméno", userRepository.findByEmail(email).orElseThrow().getName());
+        assertEquals("ARES subjekt teď nenašel. Název a sídlo zůstávají beze změny.", redirects.getFlashAttributes().get("errorMessage"));
+
+        AresService.AresResponse fresh = new AresService.AresResponse();
+        fresh.setIco("27074358");
+        fresh.setName("Nový název s.r.o.");
+        fresh.setAddress("Nová 9, Brno");
+        fresh.setVatNumber("CZ99999999");
+        when(aresService.getCompanyDetails("27074358")).thenReturn(fresh);
+        settingsController.refreshFromAres(() -> email, null, redirects);
+
+        User after = userRepository.findByEmail(email).orElseThrow();
+        assertEquals("Nový název s.r.o.", after.getName());
+        assertEquals("Nová 9, Brno", after.getAddress());
+        assertEquals("27074358", after.getIco());
+        assertEquals("CZ99999999", after.getVatNumber());
+
+        Invoice kept = invoiceRepository.findById(issued.getId()).orElseThrow();
+        assertEquals("Staré jméno", kept.getSupplierName());
+        assertEquals("Stará 1, Praha", kept.getSupplierAddress());
+        assertEquals("27074358", kept.getSupplierIco());
+        assertEquals("CZ27074358", kept.getSupplierVatNumber());
+
+        Invoice newer = new Invoice();
+        newer.setUser(after);
+        newer.setInvoiceNumber("SNAP-NEW-" + UUID.randomUUID());
+        newer.captureSupplier(after);
+        newer = invoiceRepository.save(newer);
+        assertEquals("Nový název s.r.o.", newer.getSupplierName());
+        assertEquals("Nová 9, Brno", newer.getSupplierAddress());
+        assertEquals("CZ99999999", newer.getSupplierVatNumber());
+
+        settingsController.updateSettings("Ruční", "00000001", "CZ1", "Falešná 1", true, 60.0, false, "RRRR-CCC", () -> email, redirects);
+        User locked = userRepository.findByEmail(email).orElseThrow();
+        assertEquals("Nový název s.r.o.", locked.getName());
+        assertEquals("Nová 9, Brno", locked.getAddress());
+        assertEquals("27074358", locked.getIco());
+        assertEquals("CZ99999999", locked.getVatNumber());
+        assertEquals("Staré jméno", invoiceRepository.findById(issued.getId()).orElseThrow().getSupplierName());
     }
 }

@@ -31,6 +31,9 @@
 
 <main class="max-w-4xl mx-auto px-4 py-6">
 
+    <div th:if="${successMessage}" class="no-print mb-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm p-4 rounded-xl" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="no-print mb-4 bg-rose-50 border border-rose-200 text-rose-800 text-sm p-4 rounded-xl" th:text="${errorMessage}"></div>
+
     <!-- Ovládací lišta (Zpět, Tisk, Stáhnout PDF) -->
     <div class="no-print flex flex-wrap justify-between items-center mb-6 gap-3">
         <a th:href="@{/invoices}"
@@ -49,6 +52,12 @@
                 </svg>
                 Vytisknout
             </button>
+            <form th:if="${invoice.documentKind.name() == 'QUOTE' or invoice.documentKind.name() == 'ORDER' or invoice.documentKind.name() == 'PROFORMA'}" th:action="@{'/invoices/' + ${invoice.id} + '/follow-up'}" method="post">
+                <button type="submit" class="px-4 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-lg" th:text="${invoice.documentKind.name() == 'PROFORMA' ? 'Vyúčtovat zálohu' : 'Převést na fakturu'}">Převést na fakturu</button>
+            </form>
+            <form th:if="${invoice.documentKind.name() == 'INVOICE'}" th:action="@{'/invoices/' + ${invoice.id} + '/follow-up'}" method="post">
+                <button type="submit" class="px-4 py-2 bg-amber-600 text-white text-sm font-semibold rounded-lg">Vystavit dobropis</button>
+            </form>
             <a th:href="@{/invoices/{id}/pdf(id=${invoice.id})}"
                class="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg shadow-sm hover:bg-blue-700 transition flex items-center">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -66,9 +75,10 @@
         <div class="flex justify-between items-start border-b border-gray-200 pb-6 mb-6">
             <div>
                 <h1 class="text-3xl font-bold text-gray-900 tracking-tight"
-                    th:text="'FAKTURA - DAŇOVÝ DOKLAD č. ' + ${invoice.invoiceNumber}">
+                    th:text="${invoice.documentKind.label + ' č. ' + invoice.invoiceNumber}">
                     FAKTURA č. 20260001
                 </h1>
+                <p class="text-sm text-gray-500 mt-1" th:if="${invoice.vatRegime != null}" th:text="${invoice.vatRegime.label + ' — ' + invoice.vatRegime.description}"></p>
                 <p class="text-sm text-gray-500 mt-1"
                    th:if="${invoice.variableSymbol != null}"
                    th:text="'Variabilní symbol: ' + ${invoice.variableSymbol}">
@@ -91,22 +101,22 @@
             <!-- Dodavatel -->
             <div class="bg-gray-50 p-4 rounded-lg border border-gray-100">
                 <h2 class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Dodavatel</h2>
-                <p class="font-bold text-gray-900 text-base" th:text="${invoice.user.name}">Matěj Přívozník</p>
-                <p class="text-sm text-gray-600 mt-1" th:text="${invoice.user.address}">Masarykova 1, Hradec Králové</p>
+                <p class="font-bold text-gray-900 text-base" th:text="${invoice.supplierName != null ? invoice.supplierName : invoice.user.name}">Matěj Přívozník</p>
+                <p class="text-sm text-gray-600 mt-1" th:text="${invoice.supplierAddress != null ? invoice.supplierAddress : invoice.user.address}">Masarykova 1, Hradec Králové</p>
                 <div class="mt-3 text-sm text-gray-700 space-y-0.5">
-                    <p th:if="${invoice.user.ico != null}"><span class="font-medium text-gray-500">IČO:</span> <span th:text="${invoice.user.ico}">12345678</span></p>
-                    <p th:if="${invoice.user.vatNumber != null}"><span class="font-medium text-gray-500">DIČ:</span> <span th:text="${invoice.user.vatNumber}">CZ12345678</span></p>
+                    <p th:if="${(invoice.supplierIco != null ? invoice.supplierIco : invoice.user.ico) != null}"><span class="font-medium text-gray-500">IČO:</span> <span th:text="${invoice.supplierIco != null ? invoice.supplierIco : invoice.user.ico}">12345678</span></p>
+                    <p th:if="${(invoice.supplierVatNumber != null ? invoice.supplierVatNumber : invoice.user.vatNumber) != null}"><span class="font-medium text-gray-500">DIČ:</span> <span th:text="${invoice.supplierVatNumber != null ? invoice.supplierVatNumber : invoice.user.vatNumber}">CZ12345678</span></p>
                 </div>
             </div>
 
             <!-- Odběratel -->
             <div class="bg-gray-50 p-4 rounded-lg border border-gray-100">
                 <h2 class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Odběratel</h2>
-                <p class="font-bold text-gray-900 text-base" th:text="${invoice.client.name}">Firma s.r.o.</p>
-                <p class="text-sm text-gray-600 mt-1" th:text="${invoice.client.address}">500 02 Hradec Králové</p>
+                <p class="font-bold text-gray-900 text-base" th:text="${invoice.customerName != null and !invoice.customerName.isBlank() ? invoice.customerName : (invoice.client != null ? invoice.client.name : '')}">Firma s.r.o.</p>
+                <p class="text-sm text-gray-600 mt-1" th:text="${invoice.customerAddress != null ? invoice.customerAddress : (invoice.client != null ? invoice.client.address : '')}">500 02 Hradec Králové</p>
                 <div class="mt-3 text-sm text-gray-700 space-y-0.5">
-                    <p th:if="${invoice.client.ico != null}"><span class="font-medium text-gray-500">IČO:</span> <span th:text="${invoice.client.ico}">87654321</span></p>
-                    <p th:if="${invoice.client.vatNumber != null}"><span class="font-medium text-gray-500">DIČ:</span> <span th:text="${invoice.client.vatNumber}">CZ87654321</span></p>
+                    <p th:if="${(invoice.customerIco != null ? invoice.customerIco : (invoice.client != null ? invoice.client.ico : null)) != null}"><span class="font-medium text-gray-500">IČO:</span> <span th:text="${invoice.customerIco != null ? invoice.customerIco : invoice.client.ico}">87654321</span></p>
+                    <p th:if="${(invoice.customerVatNumber != null ? invoice.customerVatNumber : (invoice.client != null ? invoice.client.vatNumber : null)) != null}"><span class="font-medium text-gray-500">DIČ:</span> <span th:text="${invoice.customerVatNumber != null ? invoice.customerVatNumber : invoice.client.vatNumber}">CZ87654321</span></p>
                 </div>
             </div>
         </div>
@@ -124,8 +134,15 @@
                 <p class="flex justify-between"><span class="text-gray-500">Datum vystavení:</span> <span class="font-medium text-gray-900" th:text="${#temporals.format(invoice.issueDate, 'dd.MM.yyyy')}">01.11.2026</span></p>
                 <p class="flex justify-between"><span class="text-gray-500">Datum zdanitelného plnění (DUZP):</span> <span class="font-medium text-gray-900" th:text="${#temporals.format(invoice.taxableSupplyDate != null ? invoice.taxableSupplyDate : invoice.issueDate, 'dd.MM.yyyy')}">01.11.2026</span></p>
                 <p class="flex justify-between"><span class="text-gray-500">Datum splatnosti:</span> <span class="font-bold text-gray-900" th:text="${#temporals.format(invoice.dueDate, 'dd.MM.yyyy')}">15.11.2026</span></p>
+                <p class="flex justify-between" th:if="${invoice.currency != null and invoice.currency != 'CZK'}"><span class="text-gray-500">Měna dokladu:</span> <span class="font-medium text-gray-900" th:text="${invoice.currency}">EUR</span></p>
+                <p class="flex justify-between" th:if="${invoice.exchangeRate != null and invoice.currency != 'CZK'}"><span class="text-gray-500">Kurz ČNB:</span> <span class="font-medium text-gray-900" th:text="${#numbers.formatDecimal(invoice.exchangeRate, 1, 'COMMA', 3, 'POINT') + ' CZK'}">24,500 CZK</span></p>
+                <p class="flex justify-between" th:if="${invoice.czkGrossTotal != null and invoice.currency != 'CZK'}"><span class="text-gray-500">Celkem v CZK pro evidenci:</span> <span class="font-medium text-gray-900" th:text="${#numbers.formatDecimal(invoice.czkGrossTotal, 1, 'WHITESPACE', 2, 'POINT') + ' Kč'}">1000 Kč</span></p>
             </div>
         </div>
+        <p class="text-xs text-gray-500 mb-6" th:if="${invoice.sourceDocument != null}">
+            Navazuje na
+            <a class="text-blue-700 underline" th:href="@{'/invoices/' + ${invoice.sourceDocument.id}}" th:text="${invoice.sourceDocument.documentKind.label + ' ' + invoice.sourceDocument.invoiceNumber}">doklad</a>.
+        </p>
 
         <!-- Tabulka položek -->
         <div class="overflow-x-auto mb-8">

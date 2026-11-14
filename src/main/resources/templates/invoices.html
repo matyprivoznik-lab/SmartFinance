@@ -20,9 +20,10 @@
                 <h1 class="text-2xl font-black text-slate-900">Vystavené faktury</h1>
                 <p class="text-sm text-slate-500 mt-1">Přehled všech tvých vystavených daňových dokladů</p>
             </div>
-            <a href="/invoices/new" class="btn-primary py-2.5 px-5 shadow-lg text-sm">
-                + Vystavit novou fakturu
-            </a>
+            <div class="flex flex-wrap gap-2">
+                <a href="/invoices/recurring" class="px-4 py-2.5 bg-white border border-slate-300 text-slate-800 text-sm font-semibold rounded-xl">Pravidelné faktury</a>
+                <a href="/invoices/new" class="btn-primary py-2.5 px-5 shadow-lg text-sm">+ Nový doklad</a>
+            </div>
         </div>
 
         <div th:if="${successMessage}" class="bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm p-4 rounded-xl font-medium" th:text="${successMessage}"></div>
@@ -71,7 +72,7 @@
                 <table class="w-full text-left border-collapse">
                     <thead>
                     <tr class="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
-                        <th class="py-3.5 px-6">Číslo faktury</th>
+                        <th class="py-3.5 px-6">Doklad</th>
                         <th class="py-3.5 px-6">Odběratel</th>
                         <th class="py-3.5 px-6">Datum vystavení</th>
                         <th class="py-3.5 px-6 text-right">Částka celkem</th>
@@ -81,10 +82,13 @@
                     <tbody class="divide-y divide-slate-100 text-sm text-slate-700">
                     <tr th:each="invoice : ${invoices}" class="hover:bg-slate-50/85 transition">
                         <td class="py-4 px-6 font-semibold text-blue-600">
-                            <a th:href="@{'/invoices/' + ${invoice.id}}" th:text="${invoice.invoiceNumber}">202611-001</a>
+                            <a th:href="@{'/invoices/' + ${invoice.id}}">
+                                <span class="block text-[11px] uppercase tracking-wide text-slate-400" th:text="${invoice.documentKind.label}">Faktura</span>
+                                <span th:text="${invoice.invoiceNumber}">202611-001</span>
+                            </a>
                         </td>
                         <td class="py-4 px-6 font-medium text-slate-900">
-                            <span th:text="${invoice.client != null ? invoice.client.name : 'Nespecifikován'}">Odběratel</span>
+                            <span th:text="${invoice.customerName != null and !invoice.customerName.isBlank() ? invoice.customerName : (invoice.client != null ? invoice.client.name : 'Nespecifikován')}">Odběratel</span>
                         </td>
                         <td class="py-4 px-6 text-slate-500" th:text="${#temporals.format(invoice.issueDate, 'dd.MM.yyyy')}">05.11.2026</td>
                         <td class="py-4 px-6 text-right font-bold text-slate-900"

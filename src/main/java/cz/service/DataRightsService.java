@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import cz.document.DocumentKind;
+import cz.document.VatRegime;
 import cz.entity.Client;
 import cz.entity.Invoice;
 import cz.entity.InvoiceItem;
@@ -137,6 +139,12 @@ public class DataRightsService {
             invoice.setTaxableSupplyDate(supplyDate != null ? supplyDate : issueDate);
             invoice.setStatus(parseStatus(text(node, "status")));
             invoice.setClient(resolveClient(user, node.get("client")));
+            applySupplier(invoice, user, node.get("supplier"));
+            applyCustomer(invoice, node.get("customer"));
+            invoice.setDocumentKind(parseKind(text(node, "documentKind")));
+            invoice.setVatRegime(parseRegime(text(node, "vatRegime")));
+            String currency = text(node, "currency");
+            invoice.setCurrency(currency == null ? "CZK" : currency);
 
             JsonNode items = node.get("items");
             if (items != null && items.isArray() && !items.isEmpty()) {
@@ -248,6 +256,20 @@ public class DataRightsService {
             node.put("vatAmount", invoice.getVatAmount());
             node.put("vatRate", invoice.getVatRate());
             node.put("status", invoice.getStatus() != null ? invoice.getStatus().name() : Invoice.InvoiceStatus.ISSUED.name());
+            node.put("documentKind", invoice.getDocumentKind().name());
+            node.put("vatRegime", invoice.getVatRegime() == null ? null : invoice.getVatRegime().name());
+            node.put("currency", invoice.getCurrency());
+
+            ObjectNode supplier = node.putObject("supplier");
+            supplier.put("name", invoice.getSupplierName());
+            supplier.put("address", invoice.getSupplierAddress());
+            supplier.put("ico", invoice.getSupplierIco());
+            supplier.put("vatNumber", invoice.getSupplierVatNumber());
+            ObjectNode customer = node.putObject("customer");
+            customer.put("name", invoice.getCustomerName());
+            customer.put("address", invoice.getCustomerAddress());
+            customer.put("ico", invoice.getCustomerIco());
+            customer.put("vatNumber", invoice.getCustomerVatNumber());
 
             if (invoice.getClient() != null) {
                 Client client = invoice.getClient();
@@ -274,6 +296,58 @@ public class DataRightsService {
             }
         }
         return invoices;
+    }
+
+    private static void applyCustomer(Invoice invoice, JsonNode customer) {
+        String name = text(customer, "name");
+        String address = text(customer, "address");
+        String ico = text(customer, "ico");
+        String vatNumber = text(customer, "vatNumber");
+        if (name == null && address == null && ico == null && vatNumber == null) {
+            invoice.captureCustomer(invoice.getClient());
+            return;
+        }
+        invoice.setCustomerName(name);
+        invoice.setCustomerAddress(address);
+        invoice.setCustomerIco(ico);
+        invoice.setCustomerVatNumber(vatNumber);
+    }
+
+    private static DocumentKind parseKind(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return DocumentKind.INVOICE;
+        }
+        try {
+            return DocumentKind.valueOf(raw.trim().toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            return DocumentKind.INVOICE;
+        }
+    }
+
+    private static VatRegime parseRegime(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        try {
+            return VatRegime.valueOf(raw.trim().toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            return null;
+        }
+    }
+
+    private static void applySupplier(Invoice invoice, User user, JsonNode supplier) {
+        String name = text(supplier, "name");
+        String address = text(supplier, "address");
+        String ico = text(supplier, "ico");
+        String vatNumber = text(supplier, "vatNumber");
+        if (name == null && address == null && ico == null && vatNumber == null) {
+            invoice.captureSupplier(user);
+            return;
+        }
+        invoice.setSupplierName(name);
+        invoice.setSupplierAddress(address);
+        invoice.setSupplierIco(ico);
+        invoice.setSupplierVatNumber(vatNumber);
     }
 
     private Client resolveClient(User user, JsonNode clientNode) {

@@ -1,7 +1,10 @@
 package cz.service;
 
+import cz.document.DocumentKind;
 import cz.entity.User;
 import cz.repository.InvoiceRepository;
+
+import java.util.List;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -35,7 +38,8 @@ public class PlanQuotaService {
         YearMonth month = YearMonth.now();
         LocalDate from = month.atDay(1);
         LocalDate to = month.atEndOfMonth();
-        return invoiceRepository.countByUserAndIssueDateBetween(user, from, to);
+        return invoiceRepository.countBillable(user, from, to, List.of(
+                DocumentKind.INVOICE, DocumentKind.PROFORMA, DocumentKind.CREDIT_NOTE));
     }
 
     public boolean canCreateInvoice(User user) {

@@ -26,6 +26,7 @@ public class User {
     private String street;
     private String city;
     private String zipCode;
+    @Column(length = 500)
     private String address;
     private String phone;
 
@@ -69,6 +70,9 @@ public class User {
     private LocalDateTime emailVerificationSentAt;
     private Integer emailVerificationAttempts;
     private LocalDateTime registeredAt;
+
+    @Column(length = 24)
+    private String invoiceNumberPattern;
 
     public User() {
     }
@@ -197,4 +201,7 @@ public class User {
 
     public LocalDateTime getRegisteredAt() { return registeredAt; }
     public void setRegisteredAt(LocalDateTime registeredAt) { this.registeredAt = registeredAt; }
+
+    public String getInvoiceNumberPattern() { return invoiceNumberPattern; }
+    public void setInvoiceNumberPattern(String invoiceNumberPattern) { this.invoiceNumberPattern = invoiceNumberPattern; }
 }

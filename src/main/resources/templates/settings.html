@@ -16,8 +16,36 @@
 
         <div>
             <h1 class="text-2xl font-black text-slate-900">Nastavení OSVČ profilu</h1>
-            <p class="text-sm text-slate-500 mt-1">Tyto údaje se automaticky předvyplňují na faktury a do daňového přehledu.</p>
+            <p class="text-sm text-slate-500 mt-1">Název, sídlo, IČO a DIČ se berou z ARES. Na fakturu se zapíšou při vystavení a pozdější načtení je už nezmění.</p>
         </div>
+
+        <section class="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-4">
+            <div>
+                <h2 class="text-sm font-black text-slate-900">Údaje z ARES</h2>
+                <p class="text-xs text-slate-500 mt-1">Ručně je změnit nejde. Nové načtení upraví jen účet. Faktury vystavené předtím si nechají původní název, sídlo, IČO a DIČ.</p>
+            </div>
+            <div class="space-y-1.5">
+                <label class="block text-sm font-bold text-slate-700">Jméno / Název firmy</label>
+                <input type="text" th:value="${currentUser != null ? currentUser.name : ''}" readonly class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-100 text-slate-600 outline-none text-sm">
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="space-y-1.5">
+                    <label class="block text-sm font-bold text-slate-700">IČO</label>
+                    <input type="text" th:value="${currentUser != null ? currentUser.ico : ''}" readonly class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-100 text-slate-600 outline-none text-sm">
+                </div>
+                <div class="space-y-1.5">
+                    <label class="block text-sm font-bold text-slate-700">DIČ</label>
+                    <input type="text" th:value="${currentUser != null ? currentUser.vatNumber : ''}" readonly class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-100 text-slate-600 outline-none text-sm">
+                </div>
+            </div>
+            <div class="space-y-1.5">
+                <label class="block text-sm font-bold text-slate-700">Sídlo</label>
+                <input type="text" th:value="${currentUser != null ? currentUser.address : ''}" readonly class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-100 text-slate-600 outline-none text-sm">
+            </div>
+            <form th:action="@{/settings/ares}" method="post">
+                <button type="submit" class="bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 px-5 rounded-xl text-sm">Načíst znovu z ARES</button>
+            </form>
+        </section>
 
         <div th:if="${successMessage}" class="bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm p-4 rounded-xl font-medium" th:text="${successMessage}"></div>
         <div th:if="${errorMessage}" class="bg-rose-50 border border-rose-200 text-rose-800 text-sm p-4 rounded-xl font-medium" th:text="${errorMessage}"></div>
@@ -26,28 +54,6 @@
         </div>
 
         <form th:action="@{/settings}" method="post" class="space-y-5">
-
-            <div class="space-y-1.5">
-                <label class="block text-sm font-bold text-slate-700">Jméno / Název firmy</label>
-                <input type="text" name="name" th:value="${currentUser != null ? currentUser.name : ''}" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div class="space-y-1.5">
-                    <label class="block text-sm font-bold text-slate-700">IČO z ARES</label>
-                    <input type="text" name="ico" th:value="${currentUser != null ? currentUser.ico : ''}" readonly class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-100 text-slate-600 outline-none text-sm">
-                    <p class="text-xs text-slate-500">IČO je vázané na registr a po založení účtu nejde změnit. Faktury zůstanou u účtu.</p>
-                </div>
-                <div class="space-y-1.5">
-                    <label class="block text-sm font-bold text-slate-700">DIČ (pokud jste plátce)</label>
-                    <input type="text" name="vatNumber" th:value="${currentUser != null ? currentUser.vatNumber : ''}" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
-                </div>
-            </div>
-
-            <div class="space-y-1.5">
-                <label class="block text-sm font-bold text-slate-700">Sídlo / Adresa</label>
-                <input type="text" name="address" th:value="${currentUser != null ? currentUser.address : ''}" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
-            </div>
 
             <!-- Výběr typu činnosti OSVČ (Hlavní vs. Vedlejší) -->
             <div class="space-y-2 pt-2 border-t border-slate-100">
@@ -94,6 +100,12 @@
                 </div>
             </div>
 
+            <div class="space-y-1.5 pt-2 border-t border-slate-100">
+                <label class="block text-sm font-bold text-slate-700">Formát čísla dokladu</label>
+                <input type="text" name="invoiceNumberPattern" maxlength="24" th:value="${currentUser != null and currentUser.invoiceNumberPattern != null ? currentUser.invoiceNumberPattern : 'DRUHRRRRMM-CCC'}" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-mono">
+                <p class="text-xs text-slate-500">RRRR je rok, MM měsíc, CCC pořadí, DRUH je prázdné u faktury a Z, D, N nebo O u zálohy, dobropisu, nabídky a objednávky. Třeba RRRR-CCC nebo FVRRRRCCCC.</p>
+            </div>
+
             <div class="pt-4 flex justify-end">
                 <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded-xl shadow transition text-sm">
                     Uložit změny
@@ -105,7 +117,7 @@
     <section class="max-w-2xl mx-auto mt-6 bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8 space-y-5">
         <div>
             <h2 class="text-xl font-black text-slate-900">Osobní údaje a souhlasy</h2>
-            <p class="text-sm text-slate-500 mt-1">Tady splníš přístup, opravu, odvolání marketingu i výmaz. Oprava jména, adresy a daňových voleb je ve formuláři výše.</p>
+            <p class="text-sm text-slate-500 mt-1">Tady splníš přístup, odvolání marketingu i výmaz. Název a sídlo se opraví novým načtením z ARES. Daňové volby jsou ve formuláři výše.</p>
         </div>
 
         <div class="text-sm text-slate-700 space-y-1">
@@ -160,7 +172,7 @@
             <p class="font-semibold text-slate-800">Co s údaji děláme</p>
             <ul class="list-disc pl-5 space-y-1">
                 <li>Účet, faktury, kontakty a sklad držíme, abychom plnili smlouvu.</li>
-                <li>IČO ověřujeme v ARES, jen když o to požádáš při registraci.</li>
+                <li>Název, sídlo, IČO a DIČ bereme z ARES při registraci a při novém načtení v nastavení.</li>
                 <li>Placený plán jde přes Stripe. Číslo karty si neukládáme.</li>
                 <li>Heslo a tajemství dvoufázového ověření se do exportu nedávají.</li>
             </ul>

@@ -44,7 +44,8 @@ public class AccessEvent {
         LOGIN_FAILURE("Neúspěšné přihlášení"),
         LOGOUT("Odhlášení"),
         USER_BLOCKED("Zablokování"),
-        USER_UNBLOCKED("Odblokování");
+        USER_UNBLOCKED("Odblokování"),
+        ARES_REFRESH("Načtení z ARES");
 
         private final String label;
 
