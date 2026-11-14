@@ -36,6 +36,14 @@
             Byl jsi úspěšně odhlášen.
         </div>
 
+        <div th:if="${param.registered}" class="bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold p-3.5 rounded-xl">
+            Účet je vytvořený. Můžeš se přihlásit.
+        </div>
+
+        <div th:if="${param.deleted}" class="bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold p-3.5 rounded-xl">
+            Účet a k němu uložené faktury, kontakty a sklad jsme smazali.
+        </div>
+
         <form th:action="@{/login}" method="post" class="space-y-4">
             <div>
                 <label for="username" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">E-mail</label>

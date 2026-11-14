@@ -2,6 +2,8 @@ package cz.entity;
 
 import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "users")
 public class User {
@@ -44,6 +46,21 @@ public class User {
     // Dvoufázové ověření (MFA)
     private boolean mfaEnabled = false;
     private String mfaSecret;
+
+    // Souhlasy. Sloupce jsou nullable, aby šly doplnit k už existujícím účtům.
+    @Column(columnDefinition = "boolean default false")
+    private Boolean termsAccepted = Boolean.FALSE;
+
+    @Column(columnDefinition = "boolean default false")
+    private Boolean privacyAccepted = Boolean.FALSE;
+
+    private LocalDateTime termsAcceptedAt;
+    private LocalDateTime privacyAcceptedAt;
+
+    @Column(columnDefinition = "boolean default false")
+    private Boolean marketingConsent = Boolean.FALSE;
+
+    private LocalDateTime marketingConsentAt;
 
     public User() {
     }
@@ -136,4 +153,22 @@ public class User {
 
     public String getMfaSecret() { return mfaSecret; }
     public void setMfaSecret(String mfaSecret) { this.mfaSecret = mfaSecret; }
+
+    public boolean isTermsAccepted() { return Boolean.TRUE.equals(termsAccepted); }
+    public void setTermsAccepted(boolean termsAccepted) { this.termsAccepted = termsAccepted; }
+
+    public boolean isPrivacyAccepted() { return Boolean.TRUE.equals(privacyAccepted); }
+    public void setPrivacyAccepted(boolean privacyAccepted) { this.privacyAccepted = privacyAccepted; }
+
+    public LocalDateTime getTermsAcceptedAt() { return termsAcceptedAt; }
+    public void setTermsAcceptedAt(LocalDateTime termsAcceptedAt) { this.termsAcceptedAt = termsAcceptedAt; }
+
+    public LocalDateTime getPrivacyAcceptedAt() { return privacyAcceptedAt; }
+    public void setPrivacyAcceptedAt(LocalDateTime privacyAcceptedAt) { this.privacyAcceptedAt = privacyAcceptedAt; }
+
+    public boolean isMarketingConsent() { return Boolean.TRUE.equals(marketingConsent); }
+    public void setMarketingConsent(boolean marketingConsent) { this.marketingConsent = marketingConsent; }
+
+    public LocalDateTime getMarketingConsentAt() { return marketingConsentAt; }
+    public void setMarketingConsentAt(LocalDateTime marketingConsentAt) { this.marketingConsentAt = marketingConsentAt; }
 }

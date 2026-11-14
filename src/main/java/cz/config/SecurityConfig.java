@@ -33,6 +33,7 @@ public class SecurityConfig {
                             "/", "/index", "/index.html",
                             "/login", "/login/mfa",
                             "/register/**",
+                            "/vop", "/privacy",
                             "/css/**", "/js/**", "/images/**", "/favicon.ico",
                             "/billing/webhook",
                             "/error"

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="cs">
+<head>
+    <title>Ochrana osobních údajů – MiniFaktura</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body class="bg-slate-50 font-sans leading-normal tracking-normal min-h-screen flex flex-col">
+
+<header class="w-full bg-white shadow-sm border-b border-slate-200 py-4 print:hidden">
+    <div class="container mx-auto px-4 sm:px-6 flex justify-between items-center">
+        <a href="/" class="text-xl font-black text-blue-600 tracking-tight">MiniFaktura</a>
+        <a href="/register" class="text-sm font-semibold text-slate-600 hover:text-blue-600">Registrace</a>
+    </div>
+</header>
+
+<main class="container mx-auto px-4 sm:px-6 py-10 flex-grow">
+    <article class="max-w-3xl mx-auto bg-white border border-slate-200 rounded-2xl p-6 sm:p-8">
+        <div th:fragment="document" class="space-y-4 text-sm text-slate-700 leading-relaxed">
+        <h1 class="text-2xl font-black text-slate-900">Informace o zpracování osobních údajů</h1>
+        <p class="text-xs text-slate-500">Informace podle čl. 13 nařízení (EU) 2016/679 (GDPR). Verze z 12. listopadu 2026.</p>
+
+        <h2 class="text-base font-bold text-slate-900 pt-2">1. Správce</h2>
+        <p>Správcem osobních údajů ve službě MiniFaktura je Velocode Studio, Matěj Přívozník. Ozvat se lze přes <a href="https://velocode.eu" class="text-blue-600 underline" target="_blank" rel="noopener noreferrer">velocode.eu</a> nebo <a href="https://matejprivoznik.eu" class="text-blue-600 underline" target="_blank" rel="noopener noreferrer">matejprivoznik.eu</a>.</p>
+
+        <h2 class="text-base font-bold text-slate-900 pt-2">2. Jaké údaje zpracováváme</h2>
+        <ul class="list-disc pl-5 space-y-1">
+            <li>Účet: e-mail, heslo v podobě otisku, jméno nebo název, IČO, DIČ, adresa, telefon, číslo účtu, IBAN, SWIFT, poznámka na faktuře.</li>
+            <li>Daňové nastavení: plátce DPH, typ činnosti, sazba paušálních výdajů.</li>
+            <li>Obsah, který do služby vložíš: odběratelé, faktury, položky dokladů, skladové karty.</li>
+            <li>Souhlasy: čas potvrzení obchodních podmínek, čas seznámení s těmito informacemi a případný marketingový souhlas.</li>
+            <li>Zabezpečení: příznak a tajemství dvoufázového ověření, technický záznam přihlášení v relaci prohlížeče.</li>
+            <li>Platby: identifikátory zákazníka a předplatného u platební brány, tarif a stav předplatného. Číslo karty si služba neukládá.</li>
+        </ul>
+
+        <h2 class="text-base font-bold text-slate-900 pt-2">3. Proč a na jakém základě</h2>
+        <ul class="list-disc pl-5 space-y-1">
+            <li>Plnění smlouvy (čl. 6 odst. 1 písm. b) GDPR): vedení účtu, vystavování a uchování dokladů, uplatnění tarifu.</li>
+            <li>Oprávněný zájem (písm. f): zabezpečení účtu, omezení zneužití a základní provozní diagnostika.</li>
+            <li>Souhlas (písm. a): jen občasné novinky o službě. Souhlas není podmínkou registrace a jde ho odvolat v nastavení.</li>
+            <li>Právní povinnost (písm. c): údaje o platbách, které musí správce sám archivovat podle účetních a daňových předpisů.</li>
+        </ul>
+        <p>Údaje odběratelů vkládáš do služby ty. Vůči svým zákazníkům jsi v postavení správce a MiniFaktura je pro tento obsah zpracovatelem. Vkládej jen údaje, které k fakturaci potřebuješ.</p>
+
+        <h2 class="text-base font-bold text-slate-900 pt-2">4. Od koho údaje máme a komu je předáváme</h2>
+        <p>Údaje zadáváš ty. IČO, název a sídlo můžeme na tvoji žádost doplnit z registru ARES Ministerstva financí. Příjemci:</p>
+        <ul class="list-disc pl-5 space-y-1">
+            <li>registr ARES, a to jen v okamžiku ověření IČO,</li>
+            <li>Stripe, pokud si zapneš placený plán,</li>
+            <li>poskytovatel transakčního e-mailu, pokud je odesílání pošty zapnuté,</li>
+            <li>provozovatel serveru, na kterém služba běží.</li>
+        </ul>
+        <p>Údaje neprodáváme. Předání mimo Evropský hospodářský prostor provedeme jen tam, kde ho daný příjemce kryje rozhodnutím o odpovídající ochraně nebo standardními smluvními doložkami. Typicky se to týká platební brány a e-mailu, pokud je používáš.</p>
+
+        <h2 class="text-base font-bold text-slate-900 pt-2">5. Jak dlouho údaje držíme</h2>
+        <p>Údaje účtu, faktury, kontakty a sklad držíme po dobu trvání účtu. Po smazání účtu je mažeme. Údaje o platbách, které musíme sami evidovat, můžeme držet po dobu zákonné archivační lhůty. Doklady potřebné pro tvoje daňové povinnosti si před smazáním stáhni. Služba je po výmazu znovu neuchovává.</p>
+
+        <h2 class="text-base font-bold text-slate-900 pt-2">6. Tvoje práva</h2>
+        <ul class="list-disc pl-5 space-y-1">
+            <li>Přístup: v nastavení stáhneš JSON se svým účtem a fakturami.</li>
+            <li>Oprava: jméno, adresu, IČO, DIČ a daňové volby změníš ve stejném formuláři.</li>
+            <li>Výmaz: účet smažeš heslem v nastavení. Smažou se i faktury, kontakty, sklad a záznam předplatného.</li>
+            <li>Přenositelnost: stejný JSON jde importovat zpět, nebo ho použít při změně služby.</li>
+            <li>Odvolání marketingu: odškrtnutím v nastavení. Potvrzení podmínek a těchto informací je nutné k používání služby. Jejich odvolání znamená smazání účtu.</li>
+            <li>Omezení a námitka: napiš správci. Námitka se typicky týká zpracování na základě oprávněného zájmu.</li>
+            <li>Stížnost: Úřad pro ochranu osobních údajů, <a href="https://www.uoou.cz" class="text-blue-600 underline" target="_blank" rel="noopener noreferrer">uoou.cz</a>.</li>
+        </ul>
+
+        <h2 class="text-base font-bold text-slate-900 pt-2">7. Cookies</h2>
+        <p>Služba používá jen nezbytnou relační cookie přihlášení (JSESSIONID). Neslouží k reklamě ani k měření návštěvnosti. Bez ní nejde zůstat přihlášený.</p>
+        </div>
+    </article>
+</main>
+
+<div th:replace="~{fragments/footer :: main-footer}"></div>
+</body>
+</html>
