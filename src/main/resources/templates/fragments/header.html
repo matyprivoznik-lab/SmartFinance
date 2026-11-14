@@ -28,6 +28,8 @@
                    th:classappend="${activePage == 'billing'} ? 'nav-link-active' : 'nav-link-idle'">Předplatné</a>
                 <a href="/settings" class="nav-link text-sm font-medium transition py-1 border-b-2"
                    th:classappend="${activePage == 'settings'} ? 'nav-link-active' : 'nav-link-idle'">Nastavení</a>
+                <a th:if="${isAdmin}" href="/admin" class="nav-link text-sm font-medium transition py-1 border-b-2"
+                   th:classappend="${activePage == 'admin'} ? 'nav-link-active' : 'nav-link-idle'">Správa</a>
             </nav>
         </div>
 

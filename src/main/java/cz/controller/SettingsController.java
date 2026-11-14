@@ -71,7 +71,9 @@ public class SettingsController {
         if (name != null && !name.isBlank()) {
             currentUser.setName(name.trim());
         }
-        currentUser.setIco(ico);
+        if (ico != null && currentUser.getIco() != null && !ico.trim().equals(currentUser.getIco())) {
+            redirectAttributes.addFlashAttribute("errorMessage", "IČO z registru ARES změnit nejde.");
+        }
         currentUser.setVatNumber(vatNumber);
         currentUser.setAddress(address);
         currentUser.setMainActivity(mainActivity == null || mainActivity);

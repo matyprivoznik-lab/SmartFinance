@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="cs">
+<head>
+    <title>Správa účtů – MiniFaktura</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body class="bg-slate-50 font-sans min-h-screen flex flex-col">
+<div th:replace="~{fragments/header :: main-header}"></div>
+<main class="container mx-auto px-4 sm:px-6 py-8 flex-grow">
+    <div class="max-w-6xl mx-auto space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+            <div>
+                <h1 class="text-2xl font-black text-slate-900">Účty</h1>
+                <p class="text-sm text-slate-500 mt-1">Registrace, stav ověření a rychlé zablokování při zneužití.</p>
+            </div>
+            <a href="/admin/events" class="text-sm font-semibold text-blue-600 hover:underline">Historie přístupů</a>
+        </div>
+
+        <div th:if="${successMessage}" class="bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm p-4 rounded-xl" th:text="${successMessage}"></div>
+        <div th:if="${errorMessage}" class="bg-rose-50 border border-rose-200 text-rose-800 text-sm p-4 rounded-xl" th:text="${errorMessage}"></div>
+
+        <div class="bg-white rounded-2xl border border-slate-200 overflow-x-auto">
+            <table class="w-full text-left text-sm">
+                <thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
+                <tr>
+                    <th class="py-3 px-4">E-mail</th>
+                    <th class="py-3 px-4">Jméno</th>
+                    <th class="py-3 px-4">IČO</th>
+                    <th class="py-3 px-4">Stav</th>
+                    <th class="py-3 px-4">Registrace</th>
+                    <th class="py-3 px-4"></th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                <tr th:each="account : ${users}">
+                    <td class="py-3 px-4 font-medium text-slate-900" th:text="${account.email}"></td>
+                    <td class="py-3 px-4" th:text="${account.name}"></td>
+                    <td class="py-3 px-4" th:text="${account.ico}"></td>
+                    <td class="py-3 px-4">
+                        <span th:if="${!account.enabled}" class="text-rose-700 font-semibold">Zablokovaný</span>
+                        <span th:if="${account.enabled and !account.emailVerified}" class="text-amber-700 font-semibold">Čeká na e-mail</span>
+                        <span th:if="${account.enabled and account.emailVerified}" class="text-emerald-700 font-semibold">Aktivní</span>
+                    </td>
+                    <td class="py-3 px-4 text-slate-500" th:text="${account.registeredAt != null ? #temporals.format(account.registeredAt, 'd. M. yyyy HH:mm') : '—'}"></td>
+                    <td class="py-3 px-4 text-right">
+                        <form th:if="${account.enabled and account.role != 'ROLE_ADMIN' and account.email != currentEmail}"
+                              th:action="@{'/admin/users/' + ${account.id} + '/block'}" method="post"
+                              onsubmit="return confirm('Zablokovat tento účet?');">
+                            <button type="submit" class="text-xs font-semibold bg-rose-600 text-white px-3 py-1.5 rounded-lg">Zablokovat</button>
+                        </form>
+                        <form th:if="${!account.enabled and account.role != 'ROLE_ADMIN'}"
+                              th:action="@{'/admin/users/' + ${account.id} + '/unblock'}" method="post">
+                            <button type="submit" class="text-xs font-semibold bg-slate-900 text-white px-3 py-1.5 rounded-lg">Odblokovat</button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+<div th:replace="~{fragments/footer :: main-footer}"></div>
+</body>
+</html>

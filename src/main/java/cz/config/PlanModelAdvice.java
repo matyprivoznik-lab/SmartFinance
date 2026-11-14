@@ -4,6 +4,7 @@ import cz.entity.User;
 import cz.repository.UserRepository;
 import cz.service.PlanQuotaService;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -23,6 +24,20 @@ public class PlanModelAdvice {
     public String planTheme() {
         User user = currentUser();
         return user == null ? "theme-free" : planQuotaService.themeClass(user);
+    }
+
+    @ModelAttribute("isAdmin")
+    public boolean isAdmin() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null) {
+            return false;
+        }
+        for (GrantedAuthority authority : auth.getAuthorities()) {
+            if ("ROLE_ADMIN".equals(authority.getAuthority())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @ModelAttribute("isPro")

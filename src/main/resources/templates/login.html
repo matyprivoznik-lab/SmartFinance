@@ -36,8 +36,17 @@
             Byl jsi úspěšně odhlášen.
         </div>
 
-        <div th:if="${param.registered}" class="bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold p-3.5 rounded-xl">
-            Účet je vytvořený. Můžeš se přihlásit.
+        <div th:if="${param.verified}" class="bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold p-3.5 rounded-xl">
+            E-mail je ověřený. Můžeš se přihlásit.
+        </div>
+
+        <div th:if="${param.unverified}" class="bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold p-3.5 rounded-xl">
+            Nejdřív potvrď e-mail kódem z zprávy.
+            <a href="/register/verify-email" class="underline">Zadat kód</a>
+        </div>
+
+        <div th:if="${param.blocked}" class="bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold p-3.5 rounded-xl">
+            Účet je zablokovaný. Napiš správci služby.
         </div>
 
         <div th:if="${param.deleted}" class="bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold p-3.5 rounded-xl">

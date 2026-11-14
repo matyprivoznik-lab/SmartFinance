@@ -8,6 +8,7 @@ import cz.entity.Client;
 import cz.entity.Invoice;
 import cz.entity.InvoiceItem;
 import cz.entity.User;
+import cz.repository.AccessEventRepository;
 import cz.repository.ClientRepository;
 import cz.repository.InvoiceRepository;
 import cz.repository.ProductRepository;
@@ -36,6 +37,7 @@ public class DataRightsService {
     private final UserRepository userRepository;
     private final PlanQuotaService planQuotaService;
     private final ObjectMapper objectMapper;
+    private final AccessEventRepository accessEventRepository;
 
     public DataRightsService(InvoiceRepository invoiceRepository,
                              ClientRepository clientRepository,
@@ -43,7 +45,8 @@ public class DataRightsService {
                              SubscriptionRepository subscriptionRepository,
                              UserRepository userRepository,
                              PlanQuotaService planQuotaService,
-                             ObjectMapper objectMapper) {
+                             ObjectMapper objectMapper,
+                             AccessEventRepository accessEventRepository) {
         this.invoiceRepository = invoiceRepository;
         this.clientRepository = clientRepository;
         this.productRepository = productRepository;
@@ -51,6 +54,7 @@ public class DataRightsService {
         this.userRepository = userRepository;
         this.planQuotaService = planQuotaService;
         this.objectMapper = objectMapper;
+        this.accessEventRepository = accessEventRepository;
     }
 
     @Transactional(readOnly = true)
@@ -190,6 +194,7 @@ public class DataRightsService {
         clientRepository.deleteAll(clientRepository.findByUser(managed));
         productRepository.deleteAll(productRepository.findByUser(managed));
         subscriptionRepository.findByUser(managed).ifPresent(subscriptionRepository::delete);
+        accessEventRepository.detachUser(managed);
         userRepository.delete(managed);
         userRepository.flush();
     }

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="cs">
+<head>
+    <title>Historie přístupů – MiniFaktura</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body class="bg-slate-50 font-sans min-h-screen flex flex-col">
+<div th:replace="~{fragments/header :: main-header}"></div>
+<main class="container mx-auto px-4 sm:px-6 py-8 flex-grow">
+    <div class="max-w-6xl mx-auto space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+            <div>
+                <h1 class="text-2xl font-black text-slate-900">Historie přístupů</h1>
+                <p class="text-sm text-slate-500 mt-1">Posledních 200 událostí: registrace, kódy, přihlášení a zablokování. IP je adresa, ze které požadavek přišel na server.</p>
+            </div>
+            <a href="/admin" class="text-sm font-semibold text-blue-600 hover:underline">Zpět na účty</a>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-200 overflow-x-auto">
+            <table class="w-full text-left text-sm">
+                <thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
+                <tr>
+                    <th class="py-3 px-4">Čas</th>
+                    <th class="py-3 px-4">Událost</th>
+                    <th class="py-3 px-4">E-mail</th>
+                    <th class="py-3 px-4">IP</th>
+                    <th class="py-3 px-4">Proxy</th>
+                    <th class="py-3 px-4">Detail</th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                <tr th:if="${events == null || events.empty}">
+                    <td colspan="6" class="py-8 px-4 text-center text-slate-500">Zatím žádné záznamy.</td>
+                </tr>
+                <tr th:each="event : ${events}">
+                    <td class="py-3 px-4 whitespace-nowrap text-slate-500" th:text="${#temporals.format(event.createdAt, 'd. M. yyyy HH:mm:ss')}"></td>
+                    <td class="py-3 px-4 font-semibold text-slate-800" th:text="${event.type.label}"></td>
+                    <td class="py-3 px-4" th:text="${event.email}"></td>
+                    <td class="py-3 px-4 font-mono text-xs" th:text="${event.ipAddress}"></td>
+                    <td class="py-3 px-4 font-mono text-xs text-slate-500" th:text="${event.forwardedFor != null ? event.forwardedFor : '—'}"></td>
+                    <td class="py-3 px-4 text-slate-600" th:text="${event.detail}" th:title="${event.userAgent}"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+<div th:replace="~{fragments/footer :: main-footer}"></div>
+</body>
+</html>

@@ -20,9 +20,10 @@ public class AresService {
                 return null;
             }
 
-            // ARES vyžaduje přesně 8 číslic (doplnění zleva nulami)
-            String cleanIco = ico.trim();
-            String formattedIco = String.format("%08d", Long.parseLong(cleanIco));
+            String formattedIco = normalizeIco(ico);
+            if (formattedIco == null) {
+                return null;
+            }
 
             RestTemplate restTemplate = new RestTemplate();
             String url = ARES_URL + formattedIco;
@@ -42,7 +43,7 @@ public class AresService {
 
             if (response != null) {
                 AresResponse details = new AresResponse();
-                details.setIco(cleanIco);
+                details.setIco(formattedIco);
 
                 // Obchodní jméno
                 details.setName((String) response.get("obchodniJmeno"));
@@ -83,6 +84,17 @@ public class AresService {
             System.err.println("Chyba při načítání z ARES: " + e.getMessage());
         }
         return null;
+    }
+
+    public static String normalizeIco(String raw) {
+        if (raw == null) {
+            return null;
+        }
+        String digits = raw.trim();
+        if (!digits.matches("\\d{1,8}")) {
+            return null;
+        }
+        return String.format("%08d", Long.parseLong(digits));
     }
 
     public static class AresResponse {

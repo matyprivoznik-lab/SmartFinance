@@ -15,9 +15,15 @@ import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWrite
 public class SecurityConfig {
 
     private final CustomAuthenticationSuccessHandler customAuthenticationSuccessHandler;
+    private final AuditAuthenticationFailureHandler auditAuthenticationFailureHandler;
+    private final AuditLogoutSuccessHandler auditLogoutSuccessHandler;
 
-    public SecurityConfig(CustomAuthenticationSuccessHandler customAuthenticationSuccessHandler) {
+    public SecurityConfig(CustomAuthenticationSuccessHandler customAuthenticationSuccessHandler,
+                          AuditAuthenticationFailureHandler auditAuthenticationFailureHandler,
+                          AuditLogoutSuccessHandler auditLogoutSuccessHandler) {
         this.customAuthenticationSuccessHandler = customAuthenticationSuccessHandler;
+        this.auditAuthenticationFailureHandler = auditAuthenticationFailureHandler;
+        this.auditLogoutSuccessHandler = auditLogoutSuccessHandler;
     }
 
     @Bean
@@ -29,6 +35,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> {
+                    auth.requestMatchers("/admin/**").hasRole("ADMIN");
                     auth.requestMatchers(
                             "/", "/index", "/index.html",
                             "/login", "/login/mfa",
@@ -45,15 +52,17 @@ public class SecurityConfig {
                         .usernameParameter("username")
                         .passwordParameter("password")
                         .successHandler(customAuthenticationSuccessHandler)
+                        .failureHandler(auditAuthenticationFailureHandler)
                         .permitAll()
                 )
                 .logout(logout -> logout
                         .logoutUrl("/logout")
-                        .logoutSuccessUrl("/login?logout")
+                        .logoutSuccessHandler(auditLogoutSuccessHandler)
                         .invalidateHttpSession(true)
                         .deleteCookies("JSESSIONID")
                         .permitAll()
                 )
+                .exceptionHandling(ex -> ex.accessDeniedHandler((request, response, denied) -> response.sendRedirect("/dashboard")))
                 .csrf(csrf -> csrf.ignoringRequestMatchers("/billing/webhook"))
                 .headers(headers -> {
                     headers.contentTypeOptions(Customizer.withDefaults());
