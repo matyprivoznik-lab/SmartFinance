@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="cs">
+<head>
+    <title>Ověření e-mailu – mujDokladomat</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body class="bg-slate-50 font-sans leading-normal tracking-normal min-h-screen flex flex-col justify-between">
+
+<header class="w-full bg-white shadow-sm border-b border-slate-200 py-4">
+    <div class="container mx-auto px-4 sm:px-6 flex justify-between items-center">
+        <a href="/login" class="text-xl font-black text-blue-600 tracking-tight">mujDokladomat</a>
+        <a href="/login" class="text-sm font-semibold text-slate-600 hover:text-blue-600">Přihlášení</a>
+    </div>
+</header>
+
+<main class="flex-grow flex items-center justify-center px-4 py-12">
+    <div class="max-w-md w-full bg-white p-8 rounded-2xl shadow-sm border border-slate-200 space-y-6">
+        <div>
+            <h1 class="text-2xl font-black text-slate-900">Ověření e-mailu</h1>
+            <p class="text-sm text-slate-500 mt-1">Na e-mail jsme poslali šestimístný kód. Platí 15 minut. Bez něj se nepřihlásíš.</p>
+        </div>
+
+        <div th:if="${error}" class="bg-rose-50 border border-rose-200 text-rose-700 text-sm font-semibold p-3.5 rounded-xl" th:text="${error}"></div>
+        <div th:if="${success}" class="bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-semibold p-3.5 rounded-xl" th:text="${success}"></div>
+
+        <form th:action="@{/register/verify-email}" method="post" class="space-y-4">
+            <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1" for="email">E-mail</label>
+                <input id="email" type="email" name="email" required th:value="${email}" class="w-full px-4 py-3 border border-slate-300 bg-slate-50 rounded-xl text-sm">
+            </div>
+            <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1" for="code">Kód</label>
+                <input id="code" type="text" name="code" required inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" placeholder="123456" class="w-full px-4 py-3 border border-slate-300 bg-slate-50 rounded-xl text-sm tracking-[0.3em] font-bold">
+            </div>
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl">Potvrdit kód</button>
+        </form>
+
+        <form th:action="@{/register/verify-email/resend}" method="post">
+            <input type="hidden" name="email" th:value="${email}">
+            <button type="submit" class="text-sm font-semibold text-blue-600 hover:underline">Poslat nový kód</button>
+        </form>
+    </div>
+</main>
+
+<div th:replace="~{fragments/footer :: main-footer}"></div>
+</body>
+</html>

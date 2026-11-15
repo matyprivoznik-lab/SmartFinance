@@ -11,13 +11,17 @@
     </script>
     <div class="container mx-auto px-4 sm:px-6 py-3.5 flex justify-between items-center gap-4">
         <div class="flex items-center space-x-5 sm:space-x-8 min-w-0">
-            <a href="/dashboard" class="text-xl sm:text-2xl font-black tracking-tight text-[var(--primary)] shrink-0">MiniFaktura</a>
+            <a href="/dashboard" class="text-xl sm:text-2xl font-black tracking-tight text-[var(--primary)] shrink-0">mujDokladomat</a>
 
             <nav class="hidden md:flex space-x-5">
                 <a href="/dashboard" class="nav-link text-sm font-medium transition py-1 border-b-2"
                    th:classappend="${activePage == 'dashboard'} ? 'nav-link-active' : 'nav-link-idle'">Přehled</a>
                 <a href="/invoices" class="nav-link text-sm font-medium transition py-1 border-b-2"
                    th:classappend="${activePage == 'invoices'} ? 'nav-link-active' : 'nav-link-idle'">Faktury</a>
+                <a href="/payments" class="nav-link text-sm font-medium transition py-1 border-b-2"
+                   th:classappend="${activePage == 'payments'} ? 'nav-link-active' : 'nav-link-idle'">Platby</a>
+                <a href="/expenses" class="nav-link text-sm font-medium transition py-1 border-b-2"
+                   th:classappend="${activePage == 'expenses'} ? 'nav-link-active' : 'nav-link-idle'">Náklady</a>
                 <a href="/products" class="nav-link text-sm font-medium transition py-1 border-b-2"
                    th:classappend="${activePage == 'products'} ? 'nav-link-active' : 'nav-link-idle'">Sklad</a>
                 <a href="/clients" class="nav-link text-sm font-medium transition py-1 border-b-2"
@@ -28,10 +32,18 @@
                    th:classappend="${activePage == 'billing'} ? 'nav-link-active' : 'nav-link-idle'">Předplatné</a>
                 <a href="/settings" class="nav-link text-sm font-medium transition py-1 border-b-2"
                    th:classappend="${activePage == 'settings'} ? 'nav-link-active' : 'nav-link-idle'">Nastavení</a>
+                <a th:if="${isAdmin}" href="/admin" class="nav-link text-sm font-medium transition py-1 border-b-2"
+                   th:classappend="${activePage == 'admin'} ? 'nav-link-active' : 'nav-link-idle'">Správa</a>
             </nav>
         </div>
 
         <div class="flex items-center gap-3 shrink-0">
+            <form th:if="${companies != null and companies.size() > 1}" th:action="@{/companies/switch}" method="post" class="hidden sm:block">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <select name="companyId" onchange="this.form.submit()" class="text-xs font-semibold border border-slate-200 rounded-lg px-2 py-1.5 bg-white">
+                    <option th:each="firm : ${companies}" th:value="${firm.id}" th:text="${firm.name}" th:selected="${activeCompany != null and activeCompany.id == firm.id}">Firma</option>
+                </select>
+            </form>
             <a th:if="${!isPro}" href="/billing"
                class="quota-chip hidden sm:inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full border"
                th:title="'Free limit: ' + ${invoiceQuotaUsed} + '/' + ${invoiceQuotaLimit} + ' faktur tento měsíc'">

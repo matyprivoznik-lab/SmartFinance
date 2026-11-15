@@ -26,6 +26,7 @@ public class User {
     private String street;
     private String city;
     private String zipCode;
+    @Column(length = 500)
     private String address;
     private String phone;
 
@@ -61,6 +62,17 @@ public class User {
     private Boolean marketingConsent = Boolean.FALSE;
 
     private LocalDateTime marketingConsentAt;
+
+    // null u starších účtů znamená už ověřený e-mail. Nová registrace ukládá false, dokud nepřijde kód.
+    private Boolean emailVerified;
+    private String emailVerificationCodeHash;
+    private LocalDateTime emailVerificationExpiresAt;
+    private LocalDateTime emailVerificationSentAt;
+    private Integer emailVerificationAttempts;
+    private LocalDateTime registeredAt;
+
+    @Column(length = 24)
+    private String invoiceNumberPattern;
 
     public User() {
     }
@@ -171,4 +183,25 @@ public class User {
 
     public LocalDateTime getMarketingConsentAt() { return marketingConsentAt; }
     public void setMarketingConsentAt(LocalDateTime marketingConsentAt) { this.marketingConsentAt = marketingConsentAt; }
+
+    public boolean isEmailVerified() { return emailVerified == null || emailVerified; }
+    public void setEmailVerified(Boolean emailVerified) { this.emailVerified = emailVerified; }
+
+    public String getEmailVerificationCodeHash() { return emailVerificationCodeHash; }
+    public void setEmailVerificationCodeHash(String emailVerificationCodeHash) { this.emailVerificationCodeHash = emailVerificationCodeHash; }
+
+    public LocalDateTime getEmailVerificationExpiresAt() { return emailVerificationExpiresAt; }
+    public void setEmailVerificationExpiresAt(LocalDateTime emailVerificationExpiresAt) { this.emailVerificationExpiresAt = emailVerificationExpiresAt; }
+
+    public LocalDateTime getEmailVerificationSentAt() { return emailVerificationSentAt; }
+    public void setEmailVerificationSentAt(LocalDateTime emailVerificationSentAt) { this.emailVerificationSentAt = emailVerificationSentAt; }
+
+    public int getEmailVerificationAttempts() { return emailVerificationAttempts == null ? 0 : emailVerificationAttempts; }
+    public void setEmailVerificationAttempts(Integer emailVerificationAttempts) { this.emailVerificationAttempts = emailVerificationAttempts; }
+
+    public LocalDateTime getRegisteredAt() { return registeredAt; }
+    public void setRegisteredAt(LocalDateTime registeredAt) { this.registeredAt = registeredAt; }
+
+    public String getInvoiceNumberPattern() { return invoiceNumberPattern; }
+    public void setInvoiceNumberPattern(String invoiceNumberPattern) { this.invoiceNumberPattern = invoiceNumberPattern; }
 }

@@ -6,6 +6,8 @@ import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
+import cz.document.DocumentKind;
+import cz.document.VatRegime;
 import cz.entity.Invoice;
 import cz.entity.User;
 import org.springframework.stereotype.Service;
@@ -47,6 +49,9 @@ public class QrPaymentService {
         if (iban == null || invoice == null) {
             return null;
         }
+        if (invoice.getDocumentKind() == DocumentKind.QUOTE || invoice.getDocumentKind() == DocumentKind.ORDER) {
+            return null;
+        }
 
         StringBuilder payload = new StringBuilder("SPD*1.0*ACC:");
         payload.append(iban);
@@ -66,7 +71,7 @@ public class QrPaymentService {
             payload.append("DT:").append(invoice.getDueDate().format(DUE_DATE)).append('*');
         }
 
-        String recipient = spaydText(user.getName(), 35);
+        String recipient = spaydText(invoice.getSupplierName() != null ? invoice.getSupplierName() : user.getName(), 35);
         if (recipient != null) {
             payload.append("RN:").append(recipient).append('*');
         }
@@ -83,6 +88,10 @@ public class QrPaymentService {
         String constantSymbol = digits(invoice.getConstantSymbol(), 10);
         if (constantSymbol != null) {
             payload.append("X-KS:").append(constantSymbol).append('*');
+        }
+        String invoiceData = invoiceExtension(invoice);
+        if (invoiceData != null) {
+            payload.append(invoiceData).append('*');
         }
         return payload.toString();
     }
@@ -165,8 +174,73 @@ public class QrPaymentService {
         return compact.matches("[A-Z0-9]{8}([A-Z0-9]{3})?") ? compact : null;
     }
 
+    private static String invoiceExtension(Invoice invoice) {
+        if (invoice.getIssueDate() == null || invoice.getInvoiceNumber() == null || invoice.getInvoiceNumber().isBlank()) {
+            return null;
+        }
+        StringBuilder sid = new StringBuilder("SID*1.0*");
+        sid.append("ID:").append(sidText(invoice.getInvoiceNumber(), 40)).append('*');
+        sid.append("DD:").append(invoice.getIssueDate().format(DUE_DATE)).append('*');
+        if (invoice.getDocumentKind() == DocumentKind.PROFORMA) {
+            sid.append("TD:0*");
+        } else if (invoice.getDocumentKind() == DocumentKind.CREDIT_NOTE) {
+            sid.append("TD:1*");
+        }
+        if (invoice.getVatRegime() == VatRegime.REVERSE_CHARGE) {
+            sid.append("TP:1*");
+        }
+        appendSid(sid, "INI", digits(invoice.getSupplierIco(), 8));
+        appendSid(sid, "VII", sidText(invoice.getSupplierVatNumber(), 14));
+        appendSid(sid, "INR", digits(invoice.getCustomerIco(), 8));
+        appendSid(sid, "VIR", sidText(invoice.getCustomerVatNumber(), 14));
+        if (invoice.getTaxableSupplyDate() != null) {
+            sid.append("DUZP:").append(invoice.getTaxableSupplyDate().format(DUE_DATE)).append('*');
+        }
+        appendTaxBase(sid, invoice);
+        return "X-INV:" + sid.toString().replace("*", "%2A");
+    }
+
+    private static void appendSid(StringBuilder sid, String key, String value) {
+        if (value != null) {
+            sid.append(key).append(':').append(value).append('*');
+        }
+    }
+
+    private static void appendTaxBase(StringBuilder sid, Invoice invoice) {
+        double net = invoice.getCzkNetAmount() != null ? invoice.getCzkNetAmount() : (invoice.getNetAmount() == null ? 0.0 : invoice.getNetAmount());
+        double vat = invoice.getCzkVatAmount() != null ? invoice.getCzkVatAmount() : (invoice.getVatAmount() == null ? 0.0 : invoice.getVatAmount());
+        double gross = invoice.getCzkGrossTotal() != null ? invoice.getCzkGrossTotal() : (invoice.getGrossTotal() == null ? 0.0 : invoice.getGrossTotal());
+        if (invoice.getVatRegime() != null && !invoice.getVatRegime().chargesCzechVat()) {
+            sid.append("NTB:").append(money(gross)).append('*');
+            return;
+        }
+        int rate = invoice.getVatRate() == null ? 0 : invoice.getVatRate();
+        if (rate == 12) {
+            sid.append("TB1:").append(money(net)).append("*T1:").append(money(vat)).append('*');
+        } else if (rate >= 21) {
+            sid.append("TB0:").append(money(net)).append("*T0:").append(money(vat)).append('*');
+        } else {
+            sid.append("NTB:").append(money(gross)).append('*');
+        }
+    }
+
+    private static String money(double value) {
+        return BigDecimal.valueOf(value).setScale(2, RoundingMode.HALF_UP).toPlainString();
+    }
+
+    private static String sidText(String value, int max) {
+        String text = spaydText(value, max);
+        if (text == null) {
+            return null;
+        }
+        return text.replace("%", "");
+    }
+
     private static BigDecimal amount(Invoice invoice) {
         Double gross = invoice.getGrossTotal();
+        if (invoice.getCurrency() != null && !"CZK".equalsIgnoreCase(invoice.getCurrency()) && invoice.getCzkGrossTotal() != null) {
+            gross = invoice.getCzkGrossTotal();
+        }
         if (gross == null || gross <= 0) {
             return null;
         }

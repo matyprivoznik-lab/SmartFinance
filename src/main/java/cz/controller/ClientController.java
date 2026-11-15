@@ -1,11 +1,15 @@
 package cz.controller;
 
 import cz.entity.Client;
+import cz.entity.Company;
 import cz.entity.Invoice;
 import cz.entity.User;
 import cz.repository.ClientRepository;
 import cz.repository.InvoiceRepository;
 import cz.repository.UserRepository;
+import cz.service.CompanyService;
+import cz.service.RiskCheckService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
@@ -20,18 +24,24 @@ public class ClientController {
     private final ClientRepository clientRepository;
     private final InvoiceRepository invoiceRepository;
     private final UserRepository userRepository;
+    private final CompanyService companyService;
+    private final RiskCheckService riskCheckService;
 
     public ClientController(ClientRepository clientRepository,
                             InvoiceRepository invoiceRepository,
-                            UserRepository userRepository) {
+                            UserRepository userRepository,
+                            CompanyService companyService,
+                            RiskCheckService riskCheckService) {
         this.clientRepository = clientRepository;
         this.invoiceRepository = invoiceRepository;
         this.userRepository = userRepository;
+        this.companyService = companyService;
+        this.riskCheckService = riskCheckService;
     }
 
     // 1. Zobrazení seznamu všech klientů přihlášeného uživatele
     @GetMapping("/clients")
-    public String showClients(@AuthenticationPrincipal UserDetails userDetails, Model model) {
+    public String showClients(@AuthenticationPrincipal UserDetails userDetails, HttpServletRequest request, Model model) {
         if (userDetails == null) {
             return "redirect:/login";
         }
@@ -39,7 +49,7 @@ public class ClientController {
         String email = userDetails.getUsername();
         User currentUser = userRepository.findByEmail(email).orElse(null);
 
-        List<Client> clients = clientRepository.findByUser(currentUser);
+        List<Client> clients = clientRepository.findByCompany(companyService.current(currentUser, request));
 
         model.addAttribute("clients", clients);
         model.addAttribute("client", new Client());
@@ -52,7 +62,8 @@ public class ClientController {
     // 2. Uložení / vytvoření klienta
     @PostMapping("/clients/save")
     public String saveClient(@ModelAttribute Client client,
-                             @AuthenticationPrincipal UserDetails userDetails) {
+                             @AuthenticationPrincipal UserDetails userDetails,
+                             HttpServletRequest request) {
         if (userDetails == null) {
             return "redirect:/login";
         }
@@ -62,6 +73,9 @@ public class ClientController {
 
         if (currentUser != null) {
             client.setUser(currentUser);
+            if (client.getCompany() == null) {
+                client.setCompany(companyService.current(currentUser, request));
+            }
             clientRepository.save(client);
         }
 
@@ -72,6 +86,7 @@ public class ClientController {
     @GetMapping("/clients/edit/{id}")
     public String showEditForm(@PathVariable("id") Long id,
                                @AuthenticationPrincipal UserDetails userDetails,
+                               HttpServletRequest request,
                                Model model) {
         if (userDetails == null) {
             return "redirect:/login";
@@ -87,7 +102,7 @@ public class ClientController {
             return "redirect:/clients";
         }
 
-        List<Client> clients = clientRepository.findByUser(currentUser);
+        List<Client> clients = clientRepository.findByCompany(companyService.current(currentUser, request));
 
         model.addAttribute("clients", clients);
         model.addAttribute("client", client);
@@ -97,10 +112,31 @@ public class ClientController {
         return "clients";
     }
 
+    @PostMapping("/clients/{id}/risk")
+    public String checkRisk(@PathVariable("id") Long id,
+                            @AuthenticationPrincipal UserDetails userDetails,
+                            org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+        User currentUser = userDetails == null ? null : userRepository.findByEmail(userDetails.getUsername()).orElse(null);
+        Client client = clientRepository.findById(id).orElse(null);
+        if (currentUser == null || client == null || client.getUser() == null
+                || !client.getUser().getId().equals(currentUser.getId())) {
+            return "redirect:/clients";
+        }
+        RiskCheckService.Risk risk = riskCheckService.check(client.getIco(), client.getVatNumber());
+        client.setRiskInsolvency(risk.insolvency());
+        client.setRiskInsolvencyDetail(risk.insolvencyDetail());
+        client.setRiskUnreliableVat(risk.unreliableVat());
+        client.setRiskCheckedAt(java.time.LocalDateTime.now(java.time.ZoneId.of("Europe/Prague")));
+        clientRepository.save(client);
+        redirectAttributes.addFlashAttribute("successMessage", risk.insolvencyDetail());
+        return "redirect:/clients";
+    }
+
     // 4. Bezpečné smazání klienta (odpojení faktur bez jejich smazání)
     @PostMapping("/clients/delete/{id}")
     public String deleteClient(@PathVariable("id") Long id,
-                               @AuthenticationPrincipal UserDetails userDetails) {
+                               @AuthenticationPrincipal UserDetails userDetails,
+                               HttpServletRequest request) {
         if (userDetails == null) {
             return "redirect:/login";
         }
@@ -110,8 +146,10 @@ public class ClientController {
 
         Client client = clientRepository.findById(id).orElse(null);
 
+        Company active = currentUser == null ? null : companyService.current(currentUser, request);
         if (client != null && currentUser != null && client.getUser() != null
-                && client.getUser().getId().equals(currentUser.getId())) {
+                && client.getUser().getId().equals(currentUser.getId())
+                && (client.getCompany() == null || active == null || client.getCompany().getId().equals(active.getId()))) {
 
             // Vyhledat všechny faktury navázané na tohoto klienta
             List<Invoice> clientInvoices = invoiceRepository.findByClient(client);

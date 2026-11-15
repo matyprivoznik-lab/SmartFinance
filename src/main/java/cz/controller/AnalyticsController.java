@@ -4,6 +4,8 @@ import cz.entity.Invoice;
 import cz.entity.User;
 import cz.repository.InvoiceRepository;
 import cz.repository.UserRepository;
+import cz.service.CompanyService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -26,8 +28,11 @@ public class AnalyticsController {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private CompanyService companyService;
+
     @GetMapping("/analytics")
-    public String analytics(Model model, @AuthenticationPrincipal UserDetails userDetails) {
+    public String analytics(Model model, @AuthenticationPrincipal UserDetails userDetails, HttpServletRequest request) {
         if (userDetails == null) {
             return "redirect:/login";
         }
@@ -35,7 +40,7 @@ public class AnalyticsController {
         String email = userDetails.getUsername();
         User currentUser = userRepository.findByEmail(email).orElse(null);
 
-        List<Invoice> invoices = invoiceRepository.findByUser(currentUser);
+        List<Invoice> invoices = invoiceRepository.findByCompany(companyService.current(currentUser, request));
 
         double grossTotalRevenue = invoices.stream()
                 .mapToDouble(i -> i.getGrossTotal() != null ? i.getGrossTotal() : 0.0)

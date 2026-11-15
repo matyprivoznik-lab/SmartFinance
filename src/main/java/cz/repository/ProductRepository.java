@@ -1,5 +1,6 @@
 package cz.repository;
 
+import cz.entity.Company;
 import cz.entity.Product;
 import cz.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -10,6 +11,10 @@ import java.util.List;
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
     List<Product> findByUser(User user);
+
+    List<Product> findByCompany(Company company);
+
+    long countByCompany(Company company);
     long countByUser(User user);
     List<Product> findByUserEmail(String email);
     long countByUserEmail(String email);

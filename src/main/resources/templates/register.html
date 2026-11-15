@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="cs">
 <head>
-    <title>MiniFaktura - Registrace OSVČ</title>
+    <title>mujDokladomat - Registrace OSVČ</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -12,7 +12,7 @@
 <!-- Horní lišta / Branding pro nepřihlášené -->
 <header class="w-full bg-white shadow-sm border-b border-slate-200 py-4 print:hidden">
     <div class="container mx-auto px-4 sm:px-6 flex justify-between items-center">
-        <a href="/login" class="text-xl sm:text-2xl font-black text-blue-600 tracking-tight">MiniFaktura</a>
+        <a href="/login" class="text-xl sm:text-2xl font-black text-blue-600 tracking-tight">mujDokladomat</a>
         <a href="/login" class="text-xs sm:text-sm font-semibold text-slate-600 hover:text-blue-600 transition">&larr; Zpět na přihlášení</a>
     </div>
 </header>
@@ -55,21 +55,27 @@
         <div th:if="${step == 2}">
             <form th:action="@{/register/save}" th:object="${user}" method="post" class="space-y-4 text-xs sm:text-sm">
                 <div>
-                    <label class="block font-bold uppercase tracking-wider text-slate-400 mb-1">IČO (ověřeno)</label>
+                    <label class="block font-bold uppercase tracking-wider text-slate-400 mb-1">IČO z ARES (nejde změnit)</label>
                     <input type="text" th:field="*{ico}" readonly
                            class="w-full px-4 py-2.5 border border-slate-200 bg-slate-100 rounded-xl text-slate-600 font-semibold cursor-not-allowed">
                 </div>
 
                 <div>
-                    <label class="block font-bold uppercase tracking-wider text-slate-500 mb-1">Obchodní jméno / Jméno a příjmení</label>
-                    <input type="text" th:field="*{name}" required
+                    <label class="block font-bold uppercase tracking-wider text-slate-500 mb-1">Obchodní jméno z ARES</label>
+                    <input type="text" th:field="*{name}" readonly
                            class="w-full px-4 py-2.5 border border-slate-300 bg-slate-50 rounded-xl focus:ring-2 focus:ring-blue-600 focus:bg-white text-slate-900 outline-none transition">
                 </div>
 
                 <div>
-                    <label class="block font-bold uppercase tracking-wider text-slate-500 mb-1">Sídlo / Adresa</label>
-                    <input type="text" th:field="*{address}" required
-                           class="w-full px-4 py-2.5 border border-slate-300 bg-slate-50 rounded-xl focus:ring-2 focus:ring-blue-600 focus:bg-white text-slate-900 outline-none transition">
+                    <label class="block font-bold uppercase tracking-wider text-slate-500 mb-1">Sídlo z ARES</label>
+                    <input type="text" th:field="*{address}" readonly
+                           class="w-full px-4 py-2.5 border border-slate-200 bg-slate-100 rounded-xl text-slate-600 font-semibold cursor-not-allowed">
+                </div>
+
+                <div>
+                    <label class="block font-bold uppercase tracking-wider text-slate-500 mb-1">DIČ z ARES</label>
+                    <input type="text" th:field="*{vatNumber}" readonly
+                           class="w-full px-4 py-2.5 border border-slate-200 bg-slate-100 rounded-xl text-slate-600 font-semibold cursor-not-allowed">
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -132,7 +138,7 @@
                 </div>
 
                 <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-emerald-600/20 transition text-sm sm:text-base mt-2">
-                    Dokončit registraci
+                    Založit účet a poslat ověřovací kód
                 </button>
             </form>
         </div>

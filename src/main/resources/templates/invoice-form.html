@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="cs">
 <head>
-    <title>MiniFaktura - Vystavit fakturu</title>
+    <title>mujDokladomat - Vystavit fakturu</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -23,6 +23,31 @@
         </div>
 
         <form th:action="@{/invoices/save}" th:object="${invoice}" method="post" class="space-y-6">
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs sm:text-sm">
+                <div>
+                    <label class="block font-bold uppercase tracking-wider text-slate-500 mb-1">Typ dokladu</label>
+                    <select th:field="*{documentKind}" class="w-full px-3 py-2.5 border border-slate-300 bg-white rounded-xl">
+                        <option th:each="kind : ${documentKinds}" th:value="${kind}" th:text="${kind.label}">Faktura</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-bold uppercase tracking-wider text-slate-500 mb-1">Režim DPH</label>
+                    <select th:field="*{vatRegime}" class="w-full px-3 py-2.5 border border-slate-300 bg-white rounded-xl">
+                        <option th:each="regime : ${vatRegimes}" th:value="${regime}" th:text="${regime.label}">Plátce</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-bold uppercase tracking-wider text-slate-500 mb-1">Měna</label>
+                    <select th:field="*{currency}" class="w-full px-3 py-2.5 border border-slate-300 bg-white rounded-xl">
+                        <option value="CZK">CZK</option>
+                        <option value="EUR">EUR</option>
+                        <option value="USD">USD</option>
+                        <option value="GBP">GBP</option>
+                    </select>
+                </div>
+            </div>
+            <p class="text-xs text-slate-500 -mt-3">U cizí měny se při uložení stáhne kurz ČNB ke dni DUZP a základ i DPH se přepočtou do CZK. Údaje obou stran se na doklad uloží a pozdější změna v ARES nebo v adresáři je nepřepíše.</p>
 
             <!-- Základní údaje -->
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-slate-50 p-4 sm:p-5 rounded-xl border border-slate-200 text-xs sm:text-sm">
@@ -59,6 +84,7 @@
                                 th:text="${c.name}"
                                 th:data-name="${c.name}"
                                 th:data-ico="${c.ico}"
+                                th:data-vat="${c.vatNumber}"
                                 th:data-address="${c.address}"
                                 th:data-email="${c.email}"
                                 th:data-phone="${c.phone}"></option>
@@ -74,6 +100,12 @@
                         <label class="block font-medium text-slate-500 mb-1">IČO odběratele</label>
                         <input type="text" id="clientIco" th:field="*{client.ico}" class="w-full px-3 sm:px-4 py-2.5 border border-slate-300 bg-white rounded-xl">
                     </div>
+                    <div>
+                        <label class="block font-medium text-slate-500 mb-1">DIČ odběratele</label>
+                        <input type="text" id="clientVat" th:field="*{client.vatNumber}" class="w-full px-3 sm:px-4 py-2.5 border border-slate-300 bg-white rounded-xl">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 gap-4">
                     <div>
                         <label class="block font-medium text-slate-500 mb-1">Adresa</label>
                         <input type="text" id="clientAddress" th:field="*{client.address}" required class="w-full px-3 sm:px-4 py-2.5 border border-slate-300 bg-white rounded-xl">
@@ -185,6 +217,7 @@
                 const option = this.options[this.selectedIndex];
                 document.getElementById('clientName').value = option.dataset.name || '';
                 document.getElementById('clientIco').value = option.dataset.ico || '';
+                document.getElementById('clientVat').value = option.dataset.vat || '';
                 document.getElementById('clientAddress').value = option.dataset.address || '';
                 document.getElementById('clientEmail').value = option.dataset.email || '';
                 document.getElementById('clientPhone').value = option.dataset.phone || '';

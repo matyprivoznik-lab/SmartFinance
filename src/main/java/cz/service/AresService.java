@@ -1,5 +1,6 @@
 package cz.service;
 
+import cz.entity.User;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.http.HttpEntity;
@@ -20,9 +21,10 @@ public class AresService {
                 return null;
             }
 
-            // ARES vyžaduje přesně 8 číslic (doplnění zleva nulami)
-            String cleanIco = ico.trim();
-            String formattedIco = String.format("%08d", Long.parseLong(cleanIco));
+            String formattedIco = normalizeIco(ico);
+            if (formattedIco == null) {
+                return null;
+            }
 
             RestTemplate restTemplate = new RestTemplate();
             String url = ARES_URL + formattedIco;
@@ -42,10 +44,11 @@ public class AresService {
 
             if (response != null) {
                 AresResponse details = new AresResponse();
-                details.setIco(cleanIco);
+                details.setIco(formattedIco);
 
                 // Obchodní jméno
                 details.setName((String) response.get("obchodniJmeno"));
+                details.setVatNumber(text(response.get("dic")));
 
                 // Získání adresy ze sekce 'sidlo'
                 Map<String, Object> sidlo = (Map<String, Object>) response.get("sidlo");
@@ -85,10 +88,44 @@ public class AresService {
         return null;
     }
 
+    public static void applyTo(User user, AresResponse data) {
+        user.setIco(data.getIco());
+        user.setName(data.getName());
+        user.setAddress(data.getAddress());
+        user.setStreet(null);
+        user.setCity(null);
+        user.setZipCode(null);
+        user.setVatNumber(blankToNull(data.getVatNumber()));
+    }
+
+    public static String normalizeIco(String raw) {
+        if (raw == null) {
+            return null;
+        }
+        String digits = raw.trim();
+        if (!digits.matches("\\d{1,8}")) {
+            return null;
+        }
+        return String.format("%08d", Long.parseLong(digits));
+    }
+
+    private static String text(Object value) {
+        if (value == null) {
+            return null;
+        }
+        String text = String.valueOf(value).trim();
+        return text.isEmpty() ? null : text;
+    }
+
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
+    }
+
     public static class AresResponse {
         private String ico;
         private String name;
         private String address;
+        private String vatNumber;
 
         public String getIco() { return ico; }
         public void setIco(String ico) { this.ico = ico; }
@@ -96,5 +133,7 @@ public class AresService {
         public void setName(String name) { this.name = name; }
         public String getAddress() { return address; }
         public void setAddress(String address) { this.address = address; }
+        public String getVatNumber() { return vatNumber; }
+        public void setVatNumber(String vatNumber) { this.vatNumber = vatNumber; }
     }
 }

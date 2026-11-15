@@ -1,7 +1,9 @@
 package cz.controller;
 
+import cz.entity.AccessEvent;
 import cz.entity.User;
 import cz.repository.UserRepository;
+import cz.service.AuditService;
 import cz.service.MfaService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -24,12 +26,14 @@ public class MfaController {
     private final MfaService mfaService;
     private final UserRepository userRepository;
     private final UserDetailsService userDetailsService;
+    private final AuditService auditService;
     private final HttpSessionSecurityContextRepository securityContextRepository = new HttpSessionSecurityContextRepository();
 
-    public MfaController(MfaService mfaService, UserRepository userRepository, UserDetailsService userDetailsService) {
+    public MfaController(MfaService mfaService, UserRepository userRepository, UserDetailsService userDetailsService, AuditService auditService) {
         this.mfaService = mfaService;
         this.userRepository = userRepository;
         this.userDetailsService = userDetailsService;
+        this.auditService = auditService;
     }
 
     // --- A. ZOBRAZENÍ A AKTIVACE V NASTAVENÍ ÚČTU ---
@@ -129,9 +133,11 @@ public class MfaController {
             securityContextRepository.saveContext(context, request, response);
 
             session.removeAttribute("MFA_PRE_AUTH_EMAIL");
+            auditService.record(request, user, user.getEmail(), AccessEvent.Type.LOGIN_SUCCESS, "Dokončeno kódem 2FA");
             return "redirect:/dashboard";
         }
 
+        auditService.record(request, user, email, AccessEvent.Type.LOGIN_FAILURE, "Neplatný kód 2FA");
         return "redirect:/login/mfa?error=true";
     }
 }

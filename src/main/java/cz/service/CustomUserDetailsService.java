@@ -7,7 +7,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-import java.util.Collections;
 
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
@@ -17,13 +16,17 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        User user = userRepository.findByEmail(email)
+        String raw = email == null ? "" : email.trim();
+        User user = userRepository.findByEmail(raw)
+                .or(() -> userRepository.findByEmail(raw.toLowerCase()))
                 .orElseThrow(() -> new UsernameNotFoundException("Uživatel s tímto emailem nebyl nalezen."));
 
-        return new org.springframework.security.core.userdetails.User(
-                user.getEmail(),
-                user.getPassword(),
-                Collections.emptyList()
-        );
+        String role = user.getRole() == null || user.getRole().isBlank() ? "ROLE_USER" : user.getRole();
+        boolean canLogin = user.isEnabled() && user.isEmailVerified();
+        return org.springframework.security.core.userdetails.User.withUsername(user.getEmail())
+                .password(user.getPassword())
+                .authorities(role)
+                .disabled(!canLogin)
+                .build();
     }
 }
