@@ -13,8 +13,8 @@
     <groupId>cz</groupId>
     <artifactId>fakturace</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>SmartFinance</name>
-    <description>MiniFaktura - Fakturační a daňový systém</description>
+    <name>mujDokladomat</name>
+    <description>mujDokladomat - Fakturační a daňový systém</description>
 
     <properties>
         <java.version>21</java.version>

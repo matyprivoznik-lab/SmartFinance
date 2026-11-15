@@ -94,7 +94,7 @@ public class DataInitializer implements CommandLineRunner {
 
             // Vytvoření položky faktury (12 100 Kč včetně 21% DPH, základ 10 000 Kč)
             InvoiceItem item = new InvoiceItem();
-            item.setDescription("Tvorba webové aplikace MiniFaktura");
+            item.setDescription("Tvorba webové aplikace mujDokladomat");
             item.setQuantity(1.0);
             item.setUnitPriceGross(12100.0);
             item.setVatRate(21.0);

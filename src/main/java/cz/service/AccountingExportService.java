@@ -65,7 +65,7 @@ public class AccountingExportService {
         xml.append("<dat:dataPack xmlns:dat=\"http://www.stormware.cz/schema/version_2/data.xsd\" ");
         xml.append("xmlns:inv=\"http://www.stormware.cz/schema/version_2/invoice.xsd\" ");
         xml.append("xmlns:typ=\"http://www.stormware.cz/schema/version_2/type.xsd\" ");
-        xml.append("id=\"minifaktura\" ico=\"").append(escape(company.getIco())).append("\" application=\"MiniFaktura\" version=\"2.0\">");
+        xml.append("id=\"mujdokladomat\" ico=\"").append(escape(company.getIco())).append("\" application=\"mujDokladomat\" version=\"2.0\">");
         for (Invoice invoice : invoiceRepository.findByCompany(company)) {
             xml.append("<dat:dataPackItem id=\"").append(escape(invoice.getInvoiceNumber())).append("\" version=\"2.0\">");
             xml.append("<inv:invoice version=\"2.0\"><inv:invoiceHeader>");

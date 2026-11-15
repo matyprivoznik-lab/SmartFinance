@@ -35,7 +35,7 @@ public class ExportController {
         if (company == null) {
             return ResponseEntity.status(401).build();
         }
-        return file(accountingExportService.csv(company), "minifaktura-ucetnictvi.csv", "text/csv");
+        return file(accountingExportService.csv(company), "mujdokladomat-ucetnictvi.csv", "text/csv");
     }
 
     @GetMapping("/export/pohoda.xml")
@@ -44,7 +44,7 @@ public class ExportController {
         if (company == null) {
             return ResponseEntity.status(401).build();
         }
-        return file(accountingExportService.pohoda(company), "minifaktura-pohoda.xml", "application/xml");
+        return file(accountingExportService.pohoda(company), "mujdokladomat-pohoda.xml", "application/xml");
     }
 
     private Company company(UserDetails userDetails, HttpServletRequest request) {

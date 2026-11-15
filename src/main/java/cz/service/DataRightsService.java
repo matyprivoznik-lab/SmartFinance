@@ -13,6 +13,7 @@ import cz.entity.Invoice;
 import cz.entity.InvoiceItem;
 import cz.entity.User;
 import cz.repository.AccessEventRepository;
+import cz.repository.BankConnectionRepository;
 import cz.repository.ClientRepository;
 import cz.repository.CompanyRepository;
 import cz.repository.ExpenseRepository;
@@ -49,6 +50,7 @@ public class DataRightsService {
     private final ExpenseRepository expenseRepository;
     private final RecurringTemplateRepository recurringTemplateRepository;
     private final CompanyService companyService;
+    private final BankConnectionRepository bankConnectionRepository;
 
     public DataRightsService(InvoiceRepository invoiceRepository,
                              ClientRepository clientRepository,
@@ -61,7 +63,8 @@ public class DataRightsService {
                              CompanyRepository companyRepository,
                              ExpenseRepository expenseRepository,
                              RecurringTemplateRepository recurringTemplateRepository,
-                             CompanyService companyService) {
+                             CompanyService companyService,
+                             BankConnectionRepository bankConnectionRepository) {
         this.invoiceRepository = invoiceRepository;
         this.clientRepository = clientRepository;
         this.productRepository = productRepository;
@@ -74,6 +77,7 @@ public class DataRightsService {
         this.expenseRepository = expenseRepository;
         this.recurringTemplateRepository = recurringTemplateRepository;
         this.companyService = companyService;
+        this.bankConnectionRepository = bankConnectionRepository;
     }
 
     @Transactional(readOnly = true)
@@ -102,13 +106,13 @@ public class DataRightsService {
         try {
             root = objectMapper.readTree(json);
         } catch (Exception ex) {
-            throw new IllegalArgumentException("Soubor není platný JSON export MiniFaktury.");
+            throw new IllegalArgumentException("Soubor není platný JSON export z mujDokladomatu.");
         }
 
         if (root.hasNonNull("format")) {
             String format = root.get("format").asText("");
             if (!FORMAT.equals(format)) {
-                throw new IllegalArgumentException("Soubor není export faktur MiniFaktury.");
+                throw new IllegalArgumentException("Soubor není export faktur z mujDokladomatu.");
             }
         }
 
@@ -222,6 +226,9 @@ public class DataRightsService {
         expenseRepository.deleteAll(expenseRepository.findByUser(managed));
         clientRepository.deleteAll(clientRepository.findByUser(managed));
         productRepository.deleteAll(productRepository.findByUser(managed));
+        for (cz.entity.Company company : companyRepository.findByOwnerOrderByIdAsc(managed)) {
+            bankConnectionRepository.deleteAll(bankConnectionRepository.findByCompanyOrderByIdAsc(company));
+        }
         companyRepository.deleteAll(companyRepository.findByOwnerOrderByIdAsc(managed));
         subscriptionRepository.findByUser(managed).ifPresent(subscriptionRepository::delete);
         accessEventRepository.detachUser(managed);

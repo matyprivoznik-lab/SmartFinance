@@ -359,7 +359,7 @@ public class InvoiceController {
         }
         byte[] body = dataRightsService.exportInvoices(currentUser);
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"minifaktura-faktury.json\"")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"mujdokladomat-faktury.json\"")
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(body);
     }

@@ -82,7 +82,7 @@ public class RecurringInvoiceService {
                         template.getClient().getEmail(),
                         invoice.getInvoiceNumber(),
                         invoice.getGrossTotal() == null ? 0.0 : invoice.getGrossTotal(),
-                        user.getName() == null ? "MiniFaktura" : user.getName());
+                        user.getName() == null ? "mujDokladomat" : user.getName());
             }
             template.setNextIssueDate(issueDate.plusMonths(template.getInterval() == RecurringTemplate.Interval.QUARTERLY ? 3 : 1));
             recurringTemplateRepository.save(template);

@@ -196,7 +196,7 @@ public class SettingsController {
         User currentUser = userRepository.findByEmail(principal.getName())
                 .orElseThrow(() -> new IllegalArgumentException("Uživatel nebyl nalezen."));
         byte[] body = dataRightsService.exportPersonalData(currentUser);
-        return jsonAttachment(body, "minifaktura-osobni-udaje.json");
+        return jsonAttachment(body, "mujdokladomat-osobni-udaje.json");
     }
 
     @PostMapping("/delete")

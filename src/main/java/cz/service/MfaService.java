@@ -39,7 +39,7 @@ public class MfaService {
     // 3. Vygeneruje QR kód ve formátu Base64 pro zobrazení v HTML šabloně
     public String generateQrCodeBase64(String email, String secretKey) {
         try {
-            String otpauthUrl = String.format("otpauth://totp/MiniFaktura:%s?secret=%s&issuer=MiniFaktura", email, secretKey);
+            String otpauthUrl = String.format("otpauth://totp/mujDokladomat:%s?secret=%s&issuer=mujDokladomat", email, secretKey);
             QRCodeWriter qrCodeWriter = new QRCodeWriter();
             BitMatrix bitMatrix = qrCodeWriter.encode(otpauthUrl, BarcodeFormat.QR_CODE, 200, 200);
 

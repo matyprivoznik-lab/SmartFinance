@@ -14,7 +14,7 @@ public class EmailService {
     private final RestClient restClient = RestClient.create();
 
     public EmailService(@Value("${app.mail.resend-api-key:}") String resendApiKey,
-                        @Value("${app.mail.from:MiniFaktura <onboarding@resend.dev>}") String from) {
+                        @Value("${app.mail.from:mujDokladomat <onboarding@resend.dev>}") String from) {
         this.resendApiKey = resendApiKey == null ? "" : resendApiKey.trim();
         this.from = from;
     }
@@ -89,7 +89,7 @@ public class EmailService {
             Map<String, Object> body = Map.of(
                     "from", from,
                     "to", new String[]{toEmail},
-                    "subject", "Ověřovací kód MiniFaktura",
+                    "subject", "Ověřovací kód mujDokladomat",
                     "text", text
             );
             restClient.post()
