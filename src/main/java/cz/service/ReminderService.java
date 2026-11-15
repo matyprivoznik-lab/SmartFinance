@@ -21,13 +21,16 @@ public class ReminderService {
     private final InvoiceRepository invoiceRepository;
     private final CompanyRepository companyRepository;
     private final EmailService emailService;
+    private final PlanQuotaService planQuotaService;
 
     public ReminderService(InvoiceRepository invoiceRepository,
                            CompanyRepository companyRepository,
-                           EmailService emailService) {
+                           EmailService emailService,
+                           PlanQuotaService planQuotaService) {
         this.invoiceRepository = invoiceRepository;
         this.companyRepository = companyRepository;
         this.emailService = emailService;
+        this.planQuotaService = planQuotaService;
     }
 
     @Transactional
@@ -46,6 +49,10 @@ public class ReminderService {
                 if (invoice.getDueDate() != null && date.isAfter(invoice.getDueDate())
                         && invoice.getStatus() == Invoice.InvoiceStatus.ISSUED) {
                     invoice.setStatus(Invoice.InvoiceStatus.OVERDUE);
+                }
+                if (company.getOwner() == null || !planQuotaService.isPro(company.getOwner())) {
+                    invoiceRepository.save(invoice);
+                    continue;
                 }
                 ReminderPolicy.Action action = ReminderPolicy.decide(
                         invoice.getDueDate(),

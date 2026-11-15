@@ -7,6 +7,7 @@ import cz.entity.Subscription;
 import cz.entity.User;
 import cz.repository.UserRepository;
 import cz.service.BillingService;
+import cz.service.PlanQuotaService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -54,6 +55,7 @@ public class BillingController {
         model.addAttribute("providerName", billingService.getPaymentGateway().providerName());
         model.addAttribute("activePage", "billing");
         model.addAttribute("isActive", billingService.isActive(user));
+        model.addAttribute("premiumLocked", PlanQuotaService.PREMIUM_LOCKED);
         return "billing";
     }
 

@@ -89,10 +89,10 @@
         <section class="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
             <div class="flex items-center gap-2">
                 <h2 class="font-black text-slate-900">Upomínky</h2>
-                <span class="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">volitelné</span>
+                <span class="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full">Premium</span>
             </div>
             <label class="inline-flex items-center gap-2 text-sm font-semibold">
-                <input type="checkbox" name="remindersEnabled" value="true" th:checked="${company == null or company.remindersEnabled}"> Posílat upomínky e-mailem
+                <input type="checkbox" name="remindersEnabled" value="true"> Posílat upomínky e-mailem, až bude účet Premium
             </label>
             <div class="grid sm:grid-cols-2 gap-3">
                 <div>
@@ -110,11 +110,11 @@
         <section class="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
             <div class="flex items-center gap-2">
                 <h2 class="font-black text-slate-900">Banka a další firma</h2>
-                <span class="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">volitelné</span>
+                <span class="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full">Premium</span>
             </div>
             <label class="block text-sm font-bold text-slate-700">Token Fio API</label>
             <input type="password" name="fioApiToken" placeholder="Nech prázdné, když Fio nemáš" class="w-full px-3 py-2 border rounded-xl text-sm" autocomplete="off">
-            <p class="text-sm text-slate-600">Propojení České spořitelny, ČSOB, Komerční banky a dalších je až po klíči v nastavení serveru. Tlačítko je v menu Platby.</p>
+            <p class="text-sm text-slate-600">Propojení účtu, nejen Fio, a druhá firma se uloží až v Premium. Cesta je menu Platby a Nastavení → Firmy pod tímhle účtem.</p>
             <label class="block text-sm font-bold text-slate-700">IČO další firmy</label>
             <input type="text" name="extraIco" placeholder="Jen když máš pod účtem druhou firmu" class="w-full px-3 py-2 border rounded-xl text-sm">
             <p th:replace="~{fragments/reach :: line (path='menu Platby, a další firma v Nastavení → Firmy pod tímhle účtem')}"></p>

@@ -14,6 +14,8 @@ import java.time.YearMonth;
 public class PlanQuotaService {
 
     public static final int FREE_MONTHLY_INVOICE_LIMIT = 5;
+    public static final String PREMIUM_LOCKED =
+            "Tohle je služba Premium. Freemium má 5 faktur měsíčně, ARES a základní fakturu. Premium přidá neomezené faktury, propojení banky, daně a další služby.";
 
     private final InvoiceRepository invoiceRepository;
     private final BillingService billingService;

@@ -51,7 +51,7 @@ public class BillingService {
     @Transactional
     public CheckoutSession startCheckout(User user, SubscriptionPlan plan, String successUrl, String cancelUrl) {
         if (!plan.isPaid()) {
-            throw new IllegalArgumentException("Nelze platit za FREE plán.");
+            throw new IllegalArgumentException("Freemium se neplatí. Premium je měsíční nebo roční.");
         }
 
         Subscription subscription = getOrCreateSubscription(user);

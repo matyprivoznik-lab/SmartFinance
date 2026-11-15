@@ -47,7 +47,7 @@ public class RecurringInvoiceService {
         int issued = 0;
         for (RecurringTemplate template : due) {
             User user = template.getUser();
-            if (user == null || !planQuotaService.canCreateInvoice(user)) {
+            if (user == null || !planQuotaService.isPro(user)) {
                 continue;
             }
             LocalDate issueDate = template.getNextIssueDate() == null ? date : template.getNextIssueDate();

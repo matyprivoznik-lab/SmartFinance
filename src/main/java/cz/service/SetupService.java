@@ -13,15 +13,20 @@ public class SetupService {
     private final UserRepository userRepository;
     private final CompanyService companyService;
     private final AresService aresService;
+    private final PlanQuotaService planQuotaService;
 
-    public SetupService(UserRepository userRepository, CompanyService companyService, AresService aresService) {
+    public SetupService(UserRepository userRepository,
+                        CompanyService companyService,
+                        AresService aresService,
+                        PlanQuotaService planQuotaService) {
         this.userRepository = userRepository;
         this.companyService = companyService;
         this.aresService = aresService;
+        this.planQuotaService = planQuotaService;
     }
 
     @Transactional
-    public void finish(User user,
+    public String finish(User user,
                        HttpServletRequest request,
                        String bankAccount,
                        String iban,
@@ -63,21 +68,30 @@ public class SetupService {
         user.setInvoiceNumberPattern(pattern);
         userRepository.save(user);
         companyService.mirrorFromUser(user, request);
-        companyService.updateReminders(user, request, remindersEnabled, gentleReminderDays, formalReminderDays);
-        if (fioApiToken != null && !fioApiToken.isBlank()) {
-            companyService.updateFioToken(user, request, fioApiToken);
-        }
-        if (extraIco != null && !extraIco.isBlank()) {
-            String normalized = AresService.normalizeIco(extraIco);
-            AresService.AresResponse data = normalized == null ? null : aresService.getCompanyDetails(normalized);
-            if (data == null || data.getName() == null) {
-                throw new IllegalArgumentException("Další firmu založíme jen z IČO, které je v ARES. Účet zatím zůstává v tomhle nastavení.");
+        boolean askedForPremium = remindersEnabled
+                || (fioApiToken != null && !fioApiToken.isBlank())
+                || (extraIco != null && !extraIco.isBlank());
+        if (planQuotaService.isPro(user)) {
+            companyService.updateReminders(user, request, remindersEnabled, gentleReminderDays, formalReminderDays);
+            if (fioApiToken != null && !fioApiToken.isBlank()) {
+                companyService.updateFioToken(user, request, fioApiToken);
             }
-            companyService.add(user, data.getName(), data.getIco(), data.getVatNumber(), data.getAddress(), request);
-            userRepository.save(user);
+            if (extraIco != null && !extraIco.isBlank()) {
+                String normalized = AresService.normalizeIco(extraIco);
+                AresService.AresResponse data = normalized == null ? null : aresService.getCompanyDetails(normalized);
+                if (data == null || data.getName() == null) {
+                    throw new IllegalArgumentException("Další firmu založíme jen z IČO, které je v ARES. Účet zatím zůstává v tomhle nastavení.");
+                }
+                companyService.add(user, data.getName(), data.getIco(), data.getVatNumber(), data.getAddress(), request);
+                userRepository.save(user);
+            }
         }
         user.setSetupCompleted(true);
         userRepository.save(user);
+        if (!planQuotaService.isPro(user) && askedForPremium) {
+            return " Upomínky, propojení banky a další firma jsou Premium a zatím se neuložily.";
+        }
+        return "";
     }
 
     @Transactional

@@ -56,10 +56,10 @@
                 </svg>
                 Vytisknout
             </button>
-            <form th:if="${invoice.documentKind.name() == 'QUOTE' or invoice.documentKind.name() == 'ORDER' or invoice.documentKind.name() == 'PROFORMA'}" th:action="@{'/invoices/' + ${invoice.id} + '/follow-up'}" method="post">
+            <form th:if="${isPro and (invoice.documentKind.name() == 'QUOTE' or invoice.documentKind.name() == 'ORDER' or invoice.documentKind.name() == 'PROFORMA')}" th:action="@{'/invoices/' + ${invoice.id} + '/follow-up'}" method="post">
                 <button type="submit" class="px-4 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-lg" th:text="${invoice.documentKind.name() == 'PROFORMA' ? 'Vyúčtovat zálohu' : 'Převést na fakturu'}">Převést na fakturu</button>
             </form>
-            <form th:if="${invoice.documentKind.name() == 'INVOICE'}" th:action="@{'/invoices/' + ${invoice.id} + '/follow-up'}" method="post">
+            <form th:if="${isPro and invoice.documentKind.name() == 'INVOICE'}" th:action="@{'/invoices/' + ${invoice.id} + '/follow-up'}" method="post">
                 <button type="submit" class="px-4 py-2 bg-amber-600 text-white text-sm font-semibold rounded-lg">Vystavit dobropis</button>
             </form>
             <a th:href="@{/invoices/{id}/pdf(id=${invoice.id})}"

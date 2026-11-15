@@ -77,7 +77,7 @@ public class SetupController {
             return "redirect:/login";
         }
         try {
-            setupService.finish(user, request, bankAccount, iban, swift, phone, note,
+            String premiumNote = setupService.finish(user, request, bankAccount, iban, swift, phone, note,
                     mainActivity == null || mainActivity,
                     expenseRate,
                     Boolean.TRUE.equals(vatPayer),
@@ -87,12 +87,13 @@ public class SetupController {
                     formalReminderDays,
                     fioApiToken,
                     extraIco);
+            redirectAttributes.addFlashAttribute("successMessage",
+                    "Účet je nachystaný. Další změny najdeš v nastavení a v platbách." + premiumNote);
+            return "redirect:/dashboard";
         } catch (IllegalArgumentException ex) {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
             return "redirect:/setup";
         }
-        redirectAttributes.addFlashAttribute("successMessage", "Účet je nachystaný. Další změny najdeš v nastavení a v platbách.");
-        return "redirect:/dashboard";
     }
 
     @PostMapping("/setup/skip")

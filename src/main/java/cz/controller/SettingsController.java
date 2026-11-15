@@ -8,6 +8,7 @@ import cz.service.AresService;
 import cz.service.AuditService;
 import cz.service.CompanyService;
 import cz.service.DataRightsService;
+import cz.service.PlanQuotaService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpHeaders;
@@ -36,19 +37,22 @@ public class SettingsController {
     private final AresService aresService;
     private final AuditService auditService;
     private final CompanyService companyService;
+    private final PlanQuotaService planQuotaService;
 
     public SettingsController(UserRepository userRepository,
                               DataRightsService dataRightsService,
                               PasswordEncoder passwordEncoder,
                               AresService aresService,
                               AuditService auditService,
-                              CompanyService companyService) {
+                              CompanyService companyService,
+                              PlanQuotaService planQuotaService) {
         this.userRepository = userRepository;
         this.dataRightsService = dataRightsService;
         this.passwordEncoder = passwordEncoder;
         this.aresService = aresService;
         this.auditService = auditService;
         this.companyService = companyService;
+        this.planQuotaService = planQuotaService;
     }
 
     @GetMapping
@@ -112,7 +116,11 @@ public class SettingsController {
 
         userRepository.save(currentUser);
         companyService.mirrorFromUser(currentUser, request);
-        companyService.updateReminders(currentUser, request, Boolean.TRUE.equals(remindersEnabled), gentleReminderDays, formalReminderDays);
+        if (planQuotaService.isPro(currentUser)) {
+            companyService.updateReminders(currentUser, request, Boolean.TRUE.equals(remindersEnabled), gentleReminderDays, formalReminderDays);
+        } else if (Boolean.TRUE.equals(remindersEnabled)) {
+            redirectAttributes.addFlashAttribute("errorMessage", PlanQuotaService.PREMIUM_LOCKED);
+        }
 
         redirectAttributes.addFlashAttribute("successMessage", "Daňové volby byly uloženy. Údaje z ARES zůstávají beze změny.");
         return "redirect:/settings?success";
