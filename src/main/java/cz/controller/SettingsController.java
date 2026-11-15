@@ -8,6 +8,7 @@ import cz.service.AresService;
 import cz.service.AuditService;
 import cz.service.CompanyService;
 import cz.service.DataRightsService;
+import cz.service.PlanQuotaService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpHeaders;
@@ -36,19 +37,22 @@ public class SettingsController {
     private final AresService aresService;
     private final AuditService auditService;
     private final CompanyService companyService;
+    private final PlanQuotaService planQuotaService;
 
     public SettingsController(UserRepository userRepository,
                               DataRightsService dataRightsService,
                               PasswordEncoder passwordEncoder,
                               AresService aresService,
                               AuditService auditService,
-                              CompanyService companyService) {
+                              CompanyService companyService,
+                              PlanQuotaService planQuotaService) {
         this.userRepository = userRepository;
         this.dataRightsService = dataRightsService;
         this.passwordEncoder = passwordEncoder;
         this.aresService = aresService;
         this.auditService = auditService;
         this.companyService = companyService;
+        this.planQuotaService = planQuotaService;
     }
 
     @GetMapping
@@ -112,10 +116,43 @@ public class SettingsController {
 
         userRepository.save(currentUser);
         companyService.mirrorFromUser(currentUser, request);
-        companyService.updateReminders(currentUser, request, Boolean.TRUE.equals(remindersEnabled), gentleReminderDays, formalReminderDays);
+        if (planQuotaService.isPro(currentUser)) {
+            companyService.updateReminders(currentUser, request, Boolean.TRUE.equals(remindersEnabled), gentleReminderDays, formalReminderDays);
+        } else if (Boolean.TRUE.equals(remindersEnabled)) {
+            redirectAttributes.addFlashAttribute("errorMessage", PlanQuotaService.PREMIUM_LOCKED);
+        }
 
         redirectAttributes.addFlashAttribute("successMessage", "Daňové volby byly uloženy. Údaje z ARES zůstávají beze změny.");
         return "redirect:/settings?success";
+    }
+
+    @PostMapping("/contact")
+    public String updateContact(@RequestParam(required = false) String bankAccount,
+                                @RequestParam(required = false) String iban,
+                                @RequestParam(required = false) String swift,
+                                @RequestParam(required = false) String phone,
+                                @RequestParam(required = false) String note,
+                                Principal principal,
+                                HttpServletRequest request,
+                                RedirectAttributes redirectAttributes) {
+        if (principal == null) {
+            return "redirect:/login";
+        }
+        User currentUser = userRepository.findByEmail(principal.getName())
+                .orElseThrow(() -> new IllegalArgumentException("Uživatel nebyl nalezen."));
+        if (bankAccount == null || bankAccount.isBlank()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Číslo účtu nech ve tvaru 123456789/0100, ať jde vytvořit QR platba.");
+            return "redirect:/settings";
+        }
+        currentUser.setBankAccount(bankAccount.trim());
+        currentUser.setIban(blank(iban));
+        currentUser.setSwift(blank(swift));
+        currentUser.setPhone(blank(phone));
+        currentUser.setNote(blank(note));
+        userRepository.save(currentUser);
+        companyService.mirrorFromUser(currentUser, request);
+        redirectAttributes.addFlashAttribute("successMessage", "Účet, telefon a poznámka na faktuře jsou uložené.");
+        return "redirect:/settings";
     }
 
     @PostMapping("/ares")
@@ -216,6 +253,10 @@ public class SettingsController {
         dataRightsService.deleteAccount(currentUser);
         request.logout();
         return "redirect:/login?deleted";
+    }
+
+    private static String blank(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
     }
 
     private static boolean differs(String submitted, String stored) {

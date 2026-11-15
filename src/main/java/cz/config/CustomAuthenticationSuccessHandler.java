@@ -43,6 +43,6 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
         }
 
         auditService.record(request, user, email, AccessEvent.Type.LOGIN_SUCCESS, null);
-        response.sendRedirect("/dashboard");
+        response.sendRedirect(user != null && user.needsSetup() ? "/setup" : "/dashboard");
     }
 }

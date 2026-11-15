@@ -134,7 +134,7 @@ public class MfaController {
 
             session.removeAttribute("MFA_PRE_AUTH_EMAIL");
             auditService.record(request, user, user.getEmail(), AccessEvent.Type.LOGIN_SUCCESS, "Dokončeno kódem 2FA");
-            return "redirect:/dashboard";
+            return user.needsSetup() ? "redirect:/setup" : "redirect:/dashboard";
         }
 
         auditService.record(request, user, email, AccessEvent.Type.LOGIN_FAILURE, "Neplatný kód 2FA");

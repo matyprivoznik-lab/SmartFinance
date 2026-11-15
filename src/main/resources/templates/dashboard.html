@@ -39,8 +39,7 @@
             </div>
         </div>
 
-        <!-- Čistý zisk (odhad / podklad) -->
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
+        <div th:if="${isPro}" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
             <div class="flex justify-between items-center text-slate-500 text-xs font-bold uppercase tracking-wider">
                 <span>Odhadovaný zisk</span>
                 <span class="p-2 bg-emerald-50 text-emerald-600 rounded-lg">💰</span>
@@ -77,7 +76,7 @@
 
     </div>
 
-    <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+    <section th:if="${isPro}" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
         <div class="flex justify-between text-sm font-bold text-slate-700">
             <span>Obrat za 12 měsíců a limit DPH</span>
             <span th:text="${#numbers.formatDecimal(vatTurnover, 1, 'WHITESPACE', 0, 'POINT') + ' / 2 000 000 Kč'}">0 / 2 000 000 Kč</span>
@@ -93,14 +92,21 @@
     </section>
 
     <!-- Rychlý odkaz na detailní daně a statistiky -->
-    <div class="bg-gradient-to-r from-slate-900 to-slate-800 text-white p-6 sm:p-8 rounded-2xl shadow-lg flex flex-col sm:flex-row justify-between items-center gap-6">
+    <div th:if="${isPro}" class="bg-gradient-to-r from-slate-900 to-slate-800 text-white p-6 sm:p-8 rounded-2xl shadow-lg flex flex-col sm:flex-row justify-between items-center gap-6">
         <div>
             <h2 class="text-xl font-bold">Potřebuješ podklady pro daňové přiznání?</h2>
             <p class="text-sm text-slate-300 mt-1">Zobraz si detailní přehledy DPH, součty za rok a exporty.</p>
         </div>
         <a href="/taxes" class="bg-white hover:bg-slate-100 text-slate-900 font-bold px-6 py-3 rounded-xl transition text-sm shadow-md whitespace-nowrap">
-            Otevřít Statistiky & Daně &rarr;
+            Otevřít Statistiky a daně
         </a>
+    </div>
+    <div th:unless="${isPro}" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div>
+            <h2 class="text-lg font-black text-slate-900">Daně, banka a náklady jsou Premium</h2>
+            <p class="text-sm text-slate-500 mt-1">Freemium stačí na 5 faktur, ARES a základní fakturu. Celkové daně, propojení účtu a export pro účetní se otevřou v Premium.</p>
+        </div>
+        <a href="/billing" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-3 rounded-xl text-sm whitespace-nowrap">Přejít na Premium</a>
     </div>
 
 </main>

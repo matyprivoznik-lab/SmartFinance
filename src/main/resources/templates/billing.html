@@ -15,17 +15,46 @@
 
     <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
         <h1 class="text-2xl sm:text-3xl font-black text-slate-900">Předplatné</h1>
-        <p class="text-sm text-slate-500 mt-1">Plať měsíčně nebo ročně přes platební bránu <span th:text="${providerName}">Stripe</span>.</p>
+        <p class="text-sm text-slate-500 mt-1">Freemium je zdarma. Premium platíš měsíčně nebo ročně přes <span th:text="${providerName}">Stripe</span>.</p>
+    </div>
+
+    <div th:if="${param.locked != null}" class="bg-amber-50 border border-amber-200 text-amber-950 text-sm p-4 rounded-xl" th:text="${premiumLocked}">Premium</div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+            <h2 class="text-xl font-black text-slate-900">Freemium</h2>
+            <p class="mt-2 text-3xl font-black text-slate-900">0 Kč <span class="text-sm font-semibold text-slate-500">/ měsíc</span></p>
+            <ul class="mt-4 space-y-1.5 text-sm text-slate-600">
+                <li>5 faktur za kalendářní měsíc</li>
+                <li>ARES při registraci i u odběratele</li>
+                <li>Základní faktura, QR platba, kontakty a sklad</li>
+                <li>Číslo účtu na faktuře a odnesení faktur v JSON</li>
+            </ul>
+            <p th:if="${!isPro}" class="mt-4 text-sm font-semibold text-slate-800">
+                Teď <span th:text="${invoiceQuotaUsed}">0</span>/<span th:text="${invoiceQuotaLimit}">5</span> faktur tento měsíc.
+            </p>
+        </section>
+        <section class="bg-white p-6 rounded-2xl shadow-sm border border-blue-200">
+            <h2 class="text-xl font-black text-slate-900">Premium</h2>
+            <p class="mt-2 text-3xl font-black text-blue-600">199 Kč <span class="text-sm font-semibold text-slate-500">/ měsíc</span></p>
+            <p class="text-sm text-slate-500">nebo 1 990 Kč / rok</p>
+            <ul class="mt-4 space-y-1.5 text-sm text-slate-600">
+                <li>Neomezený počet faktur</li>
+                <li>Propojení banky, nejen token Fio</li>
+                <li>Daně, odvody a export pro účetní</li>
+                <li>Náklady, upomínky, další firma, pravidelné doklady, dobropis a cizí měna</li>
+            </ul>
+        </section>
     </div>
 
     <div th:if="${!isPro}" class="quota-banner">
         <p class="text-sm font-semibold text-slate-800 mb-2">
-            Free plán: <span th:text="${invoiceQuotaUsed}">0</span>/<span th:text="${invoiceQuotaLimit}">5</span> faktur tento měsíc
+            Freemium: <span th:text="${invoiceQuotaUsed}">0</span>/<span th:text="${invoiceQuotaLimit}">5</span> faktur tento měsíc
         </p>
         <div class="quota-bar mb-2">
             <span th:style="'width:' + (${invoiceQuotaLimit} == 0 ? 0 : (${invoiceQuotaUsed} * 100.0 / ${invoiceQuotaLimit})) + '%'"></span>
         </div>
-        <p class="text-xs text-slate-600">Po limitu vystavení faktury zamkne. Pro odemkne neomezené faktury a teal vzhled aplikace.</p>
+        <p class="text-xs text-slate-600">Po limitu nejde vystavit další fakturu. Premium limit zvedne a otevře služby navíc.</p>
     </div>
 
     <div th:if="${successMessage}" class="bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm p-4 rounded-xl font-medium" th:text="${successMessage}"></div>
@@ -71,8 +100,8 @@
             </p>
             <ul class="mt-4 space-y-1.5 text-sm text-slate-600 flex-grow">
                 <li>Neomezené faktury</li>
-                <li>Daňové podklady OSVČ</li>
-                <li>Analytika a exporty</li>
+                <li>Banka, daně, náklady a další služby navíc</li>
+                <li>Všechno z Freemium</li>
             </ul>
             <form th:action="@{/billing/checkout}" method="post" class="mt-6">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">

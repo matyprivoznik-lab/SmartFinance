@@ -1,9 +1,9 @@
 package cz.billing;
 
 public enum SubscriptionPlan {
-    FREE("Zdarma", 0, "Bez platby"),
-    MONTHLY("Měsíční", 199, "měsíc"),
-    YEARLY("Roční", 1990, "rok");
+    FREE("Freemium", 0, "zdarma"),
+    MONTHLY("Premium", 199, "měsíc"),
+    YEARLY("Premium", 1990, "rok");
 
     private final String label;
     private final int priceCzk;

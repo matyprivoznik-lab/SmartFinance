@@ -40,14 +40,12 @@
                 <div>
                     <label class="block font-bold uppercase tracking-wider text-slate-500 mb-1">Měna</label>
                     <select th:field="*{currency}" class="w-full px-3 py-2.5 border border-slate-300 bg-white rounded-xl">
-                        <option value="CZK">CZK</option>
-                        <option value="EUR">EUR</option>
-                        <option value="USD">USD</option>
-                        <option value="GBP">GBP</option>
+                        <option th:each="code : ${currencies}" th:value="${code}" th:text="${code}">CZK</option>
                     </select>
                 </div>
             </div>
-            <p class="text-xs text-slate-500 -mt-3">U cizí měny se při uložení stáhne kurz ČNB ke dni DUZP a základ i DPH se přepočtou do CZK. Údaje obou stran se na doklad uloží a pozdější změna v ARES nebo v adresáři je nepřepíše.</p>
+            <p class="text-xs text-slate-500 -mt-3" th:if="${isPro}">U cizí měny se při uložení stáhne kurz ČNB ke dni DUZP a základ i DPH se přepočtou do CZK. Další typy dokladů jsou taky v Premium. Údaje obou stran se na doklad uloží a pozdější změna v ARES nebo v adresáři je nepřepíše.</p>
+            <p class="text-xs text-slate-500 -mt-3" th:unless="${isPro}">Freemium vystaví základní fakturu v korunách. Záloha, dobropis, nabídka, objednávka a cizí měna jsou Premium.</p>
 
             <!-- Základní údaje -->
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-slate-50 p-4 sm:p-5 rounded-xl border border-slate-200 text-xs sm:text-sm">

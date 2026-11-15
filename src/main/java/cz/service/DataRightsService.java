@@ -476,7 +476,7 @@ public class DataRightsService {
                 text.append(", ").append(skippedDuplicate).append(" přeskočeno (stejné číslo dokladu)");
             }
             if (skippedQuota > 0) {
-                text.append(", ").append(skippedQuota).append(" se nevešlo do limitu Free plánu v tomto měsíci");
+                text.append(", ").append(skippedQuota).append(" se nevešlo do limitu Freemium v tomto měsíci");
             }
             if (skippedInvalid > 0) {
                 text.append(", ").append(skippedInvalid).append(" bez čísla dokladu");

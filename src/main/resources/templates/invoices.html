@@ -21,7 +21,7 @@
                 <p class="text-sm text-slate-500 mt-1">Přehled všech tvých vystavených daňových dokladů</p>
             </div>
             <div class="flex flex-wrap gap-2">
-                <a href="/invoices/recurring" class="px-4 py-2.5 bg-white border border-slate-300 text-slate-800 text-sm font-semibold rounded-xl">Pravidelné faktury</a>
+                <a th:href="${isPro} ? '/invoices/recurring' : '/billing?locked=1'" class="px-4 py-2.5 bg-white border border-slate-300 text-slate-800 text-sm font-semibold rounded-xl">Pravidelné faktury<span th:if="${!isPro}"> · Premium</span></a>
                 <a href="/invoices/new" class="btn-primary py-2.5 px-5 shadow-lg text-sm">+ Nový doklad</a>
             </div>
         </div>
@@ -32,7 +32,7 @@
         <section class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-5 space-y-3">
             <div>
                 <h2 class="text-sm font-bold text-slate-900">Odnést nebo vrátit faktury</h2>
-                <p class="text-xs text-slate-500 mt-1">JSON export obsahuje doklady, odběratele a položky. Stejný soubor jde naimportovat, když měníš službu nebo se vracíš. Faktury s datem vystavení v tomto měsíci se počítají do limitu Free plánu.</p>
+                <p class="text-xs text-slate-500 mt-1">JSON export obsahuje doklady, odběratele a položky. Stejný soubor jde naimportovat, když měníš službu nebo se vracíš. Faktury s datem vystavení v tomto měsíci se počítají do limitu Freemium.</p>
             </div>
             <div class="flex flex-col lg:flex-row lg:items-center gap-3">
                 <a href="/invoices/export" class="inline-flex justify-center px-4 py-2 bg-slate-900 text-white text-sm font-semibold rounded-xl">Stáhnout faktury (JSON)</a>
@@ -47,11 +47,11 @@
         <div th:if="${!isPro}" class="quota-banner">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
                 <p class="text-sm font-semibold text-slate-800">
-                    Free plán:
+                    Freemium:
                     <span th:text="${invoiceQuotaUsed}">0</span>/<span th:text="${invoiceQuotaLimit}">5</span>
                     faktur tento měsíc
                 </p>
-                <a href="/billing" class="text-xs font-bold text-[var(--primary-hover)] hover:underline">Upgradovat na Pro →</a>
+                <a href="/billing" class="text-xs font-bold text-[var(--primary-hover)] hover:underline">Přejít na Premium →</a>
             </div>
             <div class="quota-bar">
                 <span th:style="'width:' + (${invoiceQuotaLimit} == 0 ? 0 : (${invoiceQuotaUsed} * 100.0 / ${invoiceQuotaLimit})) + '%'"></span>
@@ -59,7 +59,7 @@
         </div>
 
         <div th:if="${isPro}" class="quota-banner">
-            <p class="text-sm font-semibold text-slate-800">Pro plán · neomezené faktury</p>
+            <p class="text-sm font-semibold text-slate-800">Premium · neomezené faktury</p>
         </div>
 
         <!-- Tabulka faktur -->

@@ -19,15 +19,15 @@
                 <a href="/invoices" class="nav-link text-sm font-medium transition py-1 border-b-2"
                    th:classappend="${activePage == 'invoices'} ? 'nav-link-active' : 'nav-link-idle'">Faktury</a>
                 <a href="/payments" class="nav-link text-sm font-medium transition py-1 border-b-2"
-                   th:classappend="${activePage == 'payments'} ? 'nav-link-active' : 'nav-link-idle'">Platby</a>
+                   th:classappend="${activePage == 'payments'} ? 'nav-link-active' : 'nav-link-idle'">Platby<span th:if="${!isPro}" class="text-[10px] font-bold text-blue-700"> Premium</span></a>
                 <a href="/expenses" class="nav-link text-sm font-medium transition py-1 border-b-2"
-                   th:classappend="${activePage == 'expenses'} ? 'nav-link-active' : 'nav-link-idle'">Náklady</a>
+                   th:classappend="${activePage == 'expenses'} ? 'nav-link-active' : 'nav-link-idle'">Náklady<span th:if="${!isPro}" class="text-[10px] font-bold text-blue-700"> Premium</span></a>
                 <a href="/products" class="nav-link text-sm font-medium transition py-1 border-b-2"
                    th:classappend="${activePage == 'products'} ? 'nav-link-active' : 'nav-link-idle'">Sklad</a>
                 <a href="/clients" class="nav-link text-sm font-medium transition py-1 border-b-2"
                    th:classappend="${activePage == 'clients'} ? 'nav-link-active' : 'nav-link-idle'">Kontakty</a>
                 <a href="/taxes" class="nav-link text-sm font-medium transition py-1 border-b-2"
-                   th:classappend="${activePage == 'taxes'} ? 'nav-link-active' : 'nav-link-idle'">Daně</a>
+                   th:classappend="${activePage == 'taxes'} ? 'nav-link-active' : 'nav-link-idle'">Daně<span th:if="${!isPro}" class="text-[10px] font-bold text-blue-700"> Premium</span></a>
                 <a href="/billing" class="nav-link text-sm font-medium transition py-1 border-b-2"
                    th:classappend="${activePage == 'billing'} ? 'nav-link-active' : 'nav-link-idle'">Předplatné</a>
                 <a href="/settings" class="nav-link text-sm font-medium transition py-1 border-b-2"
@@ -46,13 +46,13 @@
             </form>
             <a th:if="${!isPro}" href="/billing"
                class="quota-chip hidden sm:inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full border"
-               th:title="'Free limit: ' + ${invoiceQuotaUsed} + '/' + ${invoiceQuotaLimit} + ' faktur tento měsíc'">
+               th:title="'Freemium: ' + ${invoiceQuotaUsed} + '/' + ${invoiceQuotaLimit} + ' faktur tento měsíc'">
+                <span>Freemium </span>
                 <span th:text="${invoiceQuotaUsed} + '/' + ${invoiceQuotaLimit}">0/5</span>
-                <span class="opacity-70">faktur</span>
             </a>
             <span th:if="${isPro}"
                   class="pro-chip hidden sm:inline-flex text-xs font-bold px-3 py-1.5 rounded-full">
-                Pro · neomezeně
+                Premium · neomezeně
             </span>
 
             <form th:action="@{/logout}" method="post" class="inline">

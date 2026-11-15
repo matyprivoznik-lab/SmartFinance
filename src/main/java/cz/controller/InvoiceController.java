@@ -115,10 +115,13 @@ public class InvoiceController {
         }
 
         DocumentKind documentKind = kind == null ? DocumentKind.INVOICE : kind;
+        if (documentKind != DocumentKind.INVOICE && !planQuotaService.isPro(currentUser)) {
+            return premium(redirectAttributes);
+        }
         if (documentKind.countsTowardQuota() && !planQuotaService.canCreateInvoice(currentUser)) {
             redirectAttributes.addFlashAttribute("errorMessage",
-                    "Free plán umožňuje max. " + PlanQuotaService.FREE_MONTHLY_INVOICE_LIMIT
-                            + " faktur za měsíc. Upgraduj na Předplatné.");
+                    "Freemium umožňuje max. " + PlanQuotaService.FREE_MONTHLY_INVOICE_LIMIT
+                            + " faktur za měsíc. Premium má neomezený počet.");
             return "redirect:/billing";
         }
 
@@ -142,7 +145,12 @@ public class InvoiceController {
         model.addAttribute("invoice", newInvoice);
         model.addAttribute("clients", clients);
         model.addAttribute("products", products);
-        model.addAttribute("documentKinds", DocumentKind.values());
+        model.addAttribute("documentKinds", planQuotaService.isPro(currentUser)
+                ? DocumentKind.values()
+                : new DocumentKind[]{DocumentKind.INVOICE});
+        model.addAttribute("currencies", planQuotaService.isPro(currentUser)
+                ? List.of("CZK", "EUR", "USD", "GBP")
+                : List.of("CZK"));
         model.addAttribute("vatRegimes", VatRegime.values());
         model.addAttribute("activePage", "invoices");
         return "invoice-form";
@@ -202,10 +210,16 @@ public class InvoiceController {
         } else {
             invoice.setCurrency(invoice.getCurrency().trim().toUpperCase());
         }
+        if (invoice.getDocumentKind() != DocumentKind.INVOICE && !planQuotaService.isPro(currentUser)) {
+            return premium(redirectAttributes);
+        }
+        if (!"CZK".equalsIgnoreCase(invoice.getCurrency()) && !planQuotaService.isPro(currentUser)) {
+            return premium(redirectAttributes);
+        }
         if (isNew && invoice.getDocumentKind().countsTowardQuota() && !planQuotaService.canCreateInvoice(currentUser)) {
             redirectAttributes.addFlashAttribute("errorMessage",
-                    "Free plán umožňuje max. " + PlanQuotaService.FREE_MONTHLY_INVOICE_LIMIT
-                            + " faktur za měsíc. Upgraduj na Předplatné.");
+                    "Freemium umožňuje max. " + PlanQuotaService.FREE_MONTHLY_INVOICE_LIMIT
+                            + " faktur za měsíc. Premium má neomezený počet.");
             return "redirect:/billing";
         }
 
@@ -267,6 +281,9 @@ public class InvoiceController {
         User currentUser = currentUser(userDetails);
         if (currentUser == null) {
             return "redirect:/login";
+        }
+        if (!planQuotaService.isPro(currentUser)) {
+            return premium(redirectAttributes);
         }
         Invoice source = invoiceRepository.findById(id).orElse(null);
         try {
@@ -387,6 +404,11 @@ public class InvoiceController {
             redirectAttributes.addFlashAttribute("errorMessage", "Import se nepodařil. Zkontrolujte, že jde o export z MiniFaktury.");
         }
         return target;
+    }
+
+    private static String premium(RedirectAttributes redirectAttributes) {
+        redirectAttributes.addFlashAttribute("errorMessage", PlanQuotaService.PREMIUM_LOCKED);
+        return "redirect:/billing";
     }
 
     private User currentUser(UserDetails userDetails) {

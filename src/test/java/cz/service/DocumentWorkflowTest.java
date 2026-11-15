@@ -1,15 +1,19 @@
 package cz.service;
 
+import cz.billing.SubscriptionPlan;
+import cz.billing.SubscriptionStatus;
 import cz.document.DocumentKind;
 import cz.document.VatRegime;
 import cz.entity.Client;
 import cz.entity.Invoice;
 import cz.entity.InvoiceItem;
 import cz.entity.RecurringTemplate;
+import cz.entity.Subscription;
 import cz.entity.User;
 import cz.repository.ClientRepository;
 import cz.repository.InvoiceRepository;
 import cz.repository.RecurringTemplateRepository;
+import cz.repository.SubscriptionRepository;
 import cz.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +42,8 @@ class DocumentWorkflowTest {
     private RecurringTemplateRepository recurringTemplateRepository;
     @Autowired
     private DocumentWorkflowService documentWorkflowService;
+    @Autowired
+    private SubscriptionRepository subscriptionRepository;
     @Autowired
     private RecurringInvoiceService recurringInvoiceService;
     @Autowired
@@ -118,6 +124,13 @@ class DocumentWorkflowTest {
         template.setNextIssueDate(LocalDate.of(2026, 11, 1));
         template.setActive(true);
         template = recurringTemplateRepository.save(template);
+
+        assertEquals(0, recurringInvoiceService.issueDue(LocalDate.of(2026, 11, 14)));
+        Subscription subscription = new Subscription();
+        subscription.setUser(user);
+        subscription.setPlan(SubscriptionPlan.YEARLY);
+        subscription.setStatus(SubscriptionStatus.ACTIVE);
+        subscriptionRepository.save(subscription);
 
         int issued = recurringInvoiceService.issueDue(LocalDate.of(2026, 11, 14));
         assertEquals(1, issued);

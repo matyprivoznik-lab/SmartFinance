@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="cs">
+<head>
+    <title>Rychlé nastavení – mujDokladomat</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 min-h-screen">
+<header class="bg-white border-b border-slate-200">
+    <div class="max-w-3xl mx-auto px-4 py-4 flex justify-between items-center">
+        <span class="text-xl font-black text-blue-700">mujDokladomat</span>
+        <form th:action="@{/logout}" method="post">
+            <button type="submit" class="text-sm font-semibold text-slate-500">Odhlásit se</button>
+        </form>
+    </div>
+</header>
+<main class="max-w-3xl mx-auto px-4 py-8 space-y-6">
+    <div>
+        <p class="text-xs font-bold uppercase tracking-wider text-blue-700">První přihlášení</p>
+        <h1 class="text-2xl font-black text-slate-900">Rychlé nastavení účtu</h1>
+        <p class="text-sm text-slate-500 mt-1">Všechno potřebné i volitelné je na téhle stránce. U každé položky je cesta, kudy se k ní vrátíš, a jak se ozvat mně.</p>
+    </div>
+    <div th:if="${successMessage}" class="bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm p-4 rounded-xl" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="bg-rose-50 border border-rose-200 text-rose-800 text-sm p-4 rounded-xl" th:text="${errorMessage}"></div>
+
+    <section class="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
+        <div class="flex items-center gap-2">
+            <h2 class="font-black text-slate-900">Firma z ARES</h2>
+            <span class="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">potřebné</span>
+        </div>
+        <p class="text-sm text-slate-700" th:text="${currentUser.name}">Název</p>
+        <p class="text-sm text-slate-500" th:text="${'IČO ' + currentUser.ico + (currentUser.vatNumber != null ? ' · DIČ ' + currentUser.vatNumber : '')}">IČO</p>
+        <p class="text-sm text-slate-500" th:text="${currentUser.address}">Sídlo</p>
+        <form th:action="@{/setup/ares}" method="post">
+            <button type="submit" class="text-sm font-bold text-slate-900 underline">Načíst znovu z ARES</button>
+        </form>
+        <p th:replace="~{fragments/reach :: line (path='Nastavení → Údaje z ARES')}"></p>
+    </section>
+
+    <form th:action="@{/setup}" method="post" class="space-y-6">
+        <section class="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
+            <div class="flex items-center gap-2">
+                <h2 class="font-black text-slate-900">Účet, telefon a poznámka na faktuře</h2>
+                <span class="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">potřebné</span>
+            </div>
+            <label class="block text-sm font-bold text-slate-700">Číslo účtu</label>
+            <input type="text" name="bankAccount" required th:value="${currentUser.bankAccount}" placeholder="123456789/0100" class="w-full px-3 py-2 border rounded-xl text-sm">
+            <div class="grid sm:grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-sm font-bold text-slate-700">IBAN <span class="font-normal text-slate-400">volitelné</span></label>
+                    <input type="text" name="iban" th:value="${currentUser.iban}" class="w-full px-3 py-2 border rounded-xl text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-slate-700">SWIFT <span class="font-normal text-slate-400">volitelné</span></label>
+                    <input type="text" name="swift" th:value="${currentUser.swift}" class="w-full px-3 py-2 border rounded-xl text-sm">
+                </div>
+            </div>
+            <label class="block text-sm font-bold text-slate-700">Telefon</label>
+            <input type="text" name="phone" required th:value="${currentUser.phone}" class="w-full px-3 py-2 border rounded-xl text-sm">
+            <label class="block text-sm font-bold text-slate-700">Poznámka na faktuře <span class="font-normal text-slate-400">volitelné</span></label>
+            <textarea name="note" rows="2" class="w-full px-3 py-2 border rounded-xl text-sm" th:text="${currentUser.note}"></textarea>
+            <p th:replace="~{fragments/reach :: line (path='Nastavení → Účet a kontakt')}"></p>
+        </section>
+
+        <section class="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
+            <div class="flex items-center gap-2">
+                <h2 class="font-black text-slate-900">Daně a číslování dokladů</h2>
+                <span class="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">potřebné</span>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-4 text-sm font-semibold">
+                <label class="inline-flex items-center gap-2"><input type="radio" name="mainActivity" value="true" th:checked="${currentUser.mainActivity}"> Hlavní činnost</label>
+                <label class="inline-flex items-center gap-2"><input type="radio" name="mainActivity" value="false" th:checked="${!currentUser.mainActivity}"> Vedlejší činnost</label>
+            </div>
+            <label class="block text-sm font-bold text-slate-700">Paušální výdaje</label>
+            <select name="expenseRate" class="w-full px-3 py-2 border rounded-xl text-sm bg-white">
+                <option value="80" th:selected="${expenseChoice == '80'}">80 % řemeslné živnosti</option>
+                <option value="60" th:selected="${expenseChoice == '60'}">60 % volné živnosti</option>
+                <option value="40" th:selected="${expenseChoice == '40'}">40 % svobodná povolání</option>
+            </select>
+            <label class="inline-flex items-center gap-2 text-sm font-semibold">
+                <input type="checkbox" name="vatPayer" value="true" th:checked="${currentUser.vatPayer}"> Jsem plátce DPH
+            </label>
+            <label class="block text-sm font-bold text-slate-700">Formát čísla dokladu</label>
+            <input type="text" name="invoiceNumberPattern" th:value="${defaultPattern}" class="w-full px-3 py-2 border rounded-xl text-sm font-mono">
+            <p th:replace="~{fragments/reach :: line (path='Nastavení → činnost, paušál, plátce DPH a formát čísla')}"></p>
+        </section>
+
+        <section class="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
+            <div class="flex items-center gap-2">
+                <h2 class="font-black text-slate-900">Upomínky</h2>
+                <span class="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full">Premium</span>
+            </div>
+            <label class="inline-flex items-center gap-2 text-sm font-semibold">
+                <input type="checkbox" name="remindersEnabled" value="true"> Posílat upomínky e-mailem, až bude účet Premium
+            </label>
+            <div class="grid sm:grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-sm font-bold text-slate-700">Jemná po dnech</label>
+                    <input type="number" min="0" name="gentleReminderDays" th:value="${company != null ? company.gentleReminderDays : 3}" class="w-full px-3 py-2 border rounded-xl text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-slate-700">Formální po dnech</label>
+                    <input type="number" min="0" name="formalReminderDays" th:value="${company != null ? company.formalReminderDays : 14}" class="w-full px-3 py-2 border rounded-xl text-sm">
+                </div>
+            </div>
+            <p th:replace="~{fragments/reach :: line (path='Nastavení → Jemná upomínka a Formální upomínka')}"></p>
+        </section>
+
+        <section class="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
+            <div class="flex items-center gap-2">
+                <h2 class="font-black text-slate-900">Banka a další firma</h2>
+                <span class="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full">Premium</span>
+            </div>
+            <label class="block text-sm font-bold text-slate-700">Token Fio API</label>
+            <input type="password" name="fioApiToken" placeholder="Nech prázdné, když Fio nemáš" class="w-full px-3 py-2 border rounded-xl text-sm" autocomplete="off">
+            <p class="text-sm text-slate-600">Propojení účtu, nejen Fio, a druhá firma se uloží až v Premium. Cesta je menu Platby a Nastavení → Firmy pod tímhle účtem.</p>
+            <label class="block text-sm font-bold text-slate-700">IČO další firmy</label>
+            <input type="text" name="extraIco" placeholder="Jen když máš pod účtem druhou firmu" class="w-full px-3 py-2 border rounded-xl text-sm">
+            <p th:replace="~{fragments/reach :: line (path='menu Platby, a další firma v Nastavení → Firmy pod tímhle účtem')}"></p>
+        </section>
+
+        <section class="bg-white rounded-2xl border border-slate-200 p-5 space-y-2">
+            <div class="flex items-center gap-2">
+                <h2 class="font-black text-slate-900">Dvoufázové ověření</h2>
+                <span class="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">volitelné</span>
+            </div>
+            <p class="text-sm text-slate-600">Zapne se až po uložení tohohle nastavení, v aplikaci Authenticator.</p>
+            <p th:replace="~{fragments/reach :: line (path='Nastavení → Spravovat 2FA')}"></p>
+        </section>
+
+        <div class="flex flex-col sm:flex-row gap-3">
+            <button type="submit" class="bg-blue-600 text-white font-bold px-5 py-3 rounded-xl">Uložit a jít do přehledu</button>
+        </div>
+    </form>
+
+    <form th:action="@{/setup/skip}" method="post">
+        <button type="submit" class="text-sm font-semibold text-slate-500 underline">Teď přeskočit a doplnit to později</button>
+        <p th:replace="~{fragments/reach :: line (path='Nastavení a menu Platby, až se přihlásíš znovu')}"></p>
+    </form>
+</main>
+</body>
+</html>
