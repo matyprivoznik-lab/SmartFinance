@@ -118,6 +118,35 @@ public class SettingsController {
         return "redirect:/settings?success";
     }
 
+    @PostMapping("/contact")
+    public String updateContact(@RequestParam(required = false) String bankAccount,
+                                @RequestParam(required = false) String iban,
+                                @RequestParam(required = false) String swift,
+                                @RequestParam(required = false) String phone,
+                                @RequestParam(required = false) String note,
+                                Principal principal,
+                                HttpServletRequest request,
+                                RedirectAttributes redirectAttributes) {
+        if (principal == null) {
+            return "redirect:/login";
+        }
+        User currentUser = userRepository.findByEmail(principal.getName())
+                .orElseThrow(() -> new IllegalArgumentException("Uživatel nebyl nalezen."));
+        if (bankAccount == null || bankAccount.isBlank()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Číslo účtu nech ve tvaru 123456789/0100, ať jde vytvořit QR platba.");
+            return "redirect:/settings";
+        }
+        currentUser.setBankAccount(bankAccount.trim());
+        currentUser.setIban(blank(iban));
+        currentUser.setSwift(blank(swift));
+        currentUser.setPhone(blank(phone));
+        currentUser.setNote(blank(note));
+        userRepository.save(currentUser);
+        companyService.mirrorFromUser(currentUser, request);
+        redirectAttributes.addFlashAttribute("successMessage", "Účet, telefon a poznámka na faktuře jsou uložené.");
+        return "redirect:/settings";
+    }
+
     @PostMapping("/ares")
     public String refreshFromAres(Principal principal,
                                   HttpServletRequest request,
@@ -216,6 +245,10 @@ public class SettingsController {
         dataRightsService.deleteAccount(currentUser);
         request.logout();
         return "redirect:/login?deleted";
+    }
+
+    private static String blank(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
     }
 
     private static boolean differs(String submitted, String stored) {

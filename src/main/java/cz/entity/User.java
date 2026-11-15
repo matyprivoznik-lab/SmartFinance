@@ -71,6 +71,9 @@ public class User {
     private Integer emailVerificationAttempts;
     private LocalDateTime registeredAt;
 
+    // null u starších účtů znamená, že úvodní nastavení už nechceme vnucovat. Nová registrace ukládá false.
+    private Boolean setupCompleted;
+
     @Column(length = 24)
     private String invoiceNumberPattern;
 
@@ -201,6 +204,10 @@ public class User {
 
     public LocalDateTime getRegisteredAt() { return registeredAt; }
     public void setRegisteredAt(LocalDateTime registeredAt) { this.registeredAt = registeredAt; }
+
+    public Boolean getSetupCompleted() { return setupCompleted; }
+    public void setSetupCompleted(Boolean setupCompleted) { this.setupCompleted = setupCompleted; }
+    public boolean needsSetup() { return Boolean.FALSE.equals(setupCompleted); }
 
     public String getInvoiceNumberPattern() { return invoiceNumberPattern; }
     public void setInvoiceNumberPattern(String invoiceNumberPattern) { this.invoiceNumberPattern = invoiceNumberPattern; }

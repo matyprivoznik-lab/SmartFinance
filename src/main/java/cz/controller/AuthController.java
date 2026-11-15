@@ -134,6 +134,7 @@ public class AuthController {
         user.setMfaEnabled(false);
         user.setMfaSecret(null);
         user.setRegisteredAt(acceptedAt);
+        user.setSetupCompleted(false);
         user.setPassword(passwordEncoder.encode(rawPassword));
         user.setTermsAccepted(true);
         user.setTermsAcceptedAt(acceptedAt);
