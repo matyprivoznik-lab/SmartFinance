@@ -47,7 +47,7 @@ class PlanAccessTest {
 
         mockMvc.perform(get("/invoices/new").session(session))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("Freemium vystaví základní fakturu")));
+                .andExpect(content().string(containsString("Freemium vystaví běžnou fakturu")));
 
         mockMvc.perform(get("/invoices/new").param("kind", "QUOTE").session(session))
                 .andExpect(status().isFound())
@@ -90,6 +90,10 @@ class PlanAccessTest {
         mockMvc.perform(get("/invoices").session(session))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("Premium · neomezené faktury")));
+        mockMvc.perform(get("/invoices/new").session(session))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Zálohová faktura")))
+                .andExpect(content().string(containsString("Dobropis, vrubopis, storno")));
     }
 
     private User saveUser(String email, boolean premium) {

@@ -16,8 +16,8 @@
     <div class="max-w-4xl w-full bg-white p-5 sm:p-10 rounded-2xl shadow-sm border border-slate-200">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6 sm:mb-8 border-b border-slate-200 pb-4">
             <div>
-                <h1 class="text-xl sm:text-2xl font-black text-slate-900">Nová faktura</h1>
-                <p class="text-xs text-slate-500 mt-0.5">Vystavení daňového dokladu s napojením na sklad</p>
+                <h1 class="text-xl sm:text-2xl font-black text-slate-900" th:text="${invoice.documentKind.label}">Nová faktura</h1>
+                <p class="text-xs text-slate-500 mt-0.5">Běžná faktura, záloha, nabídka nebo objednávka. Opravy a vyúčtování se vystavují z hotového dokladu.</p>
             </div>
             <a href="/invoices" class="text-xs sm:text-sm font-semibold text-blue-600 hover:underline">&larr; Zpět na seznam faktur</a>
         </div>
@@ -27,8 +27,8 @@
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs sm:text-sm">
                 <div>
                     <label class="block font-bold uppercase tracking-wider text-slate-500 mb-1">Typ dokladu</label>
-                    <select th:field="*{documentKind}" class="w-full px-3 py-2.5 border border-slate-300 bg-white rounded-xl">
-                        <option th:each="kind : ${documentKinds}" th:value="${kind}" th:text="${kind.label}">Faktura</option>
+                    <select id="document-kind" th:field="*{documentKind}" class="w-full px-3 py-2.5 border border-slate-300 bg-white rounded-xl">
+                        <option th:each="kind : ${documentKinds}" th:value="${kind}" th:text="${kind.label}" th:data-help="${kind.description + ' ' + kind.taxImpact}">Faktura</option>
                     </select>
                 </div>
                 <div>
@@ -44,8 +44,22 @@
                     </select>
                 </div>
             </div>
-            <p class="text-xs text-slate-500 -mt-3" th:if="${isPro}">U cizí měny se při uložení stáhne kurz ČNB ke dni DUZP a základ i DPH se přepočtou do CZK. Další typy dokladů jsou taky v Premium. Údaje obou stran se na doklad uloží a pozdější změna v ARES nebo v adresáři je nepřepíše.</p>
-            <p class="text-xs text-slate-500 -mt-3" th:unless="${isPro}">Freemium vystaví základní fakturu v korunách. Záloha, dobropis, nabídka, objednávka a cizí měna jsou Premium.</p>
+            <p id="kind-help" class="text-sm text-slate-600 -mt-3"></p>
+            <p class="text-xs text-slate-500" th:if="${isPro}">U cizí měny se při uložení stáhne kurz ČNB ke dni DUZP a základ i DPH se přepočtou do CZK. Dobropis, vrubopis, storno, daňový doklad k platbě, vyúčtování a souhrnný doklad se vystavují z hotového dokladu. Údaje obou stran se uloží a pozdější změna v ARES nebo v adresáři je nepřepíše.</p>
+            <p class="text-xs text-slate-500" th:unless="${isPro}">Freemium vystaví běžnou fakturu v korunách. Záloha, nabídka, objednávka, opravy a cizí měna jsou Premium.</p>
+            <script>
+                (function () {
+                    var select = document.getElementById('document-kind');
+                    var help = document.getElementById('kind-help');
+                    if (!select || !help) return;
+                    var show = function () {
+                        var option = select.options[select.selectedIndex];
+                        help.textContent = option ? (option.getAttribute('data-help') || '') : '';
+                    };
+                    select.addEventListener('change', show);
+                    show();
+                })();
+            </script>
 
             <!-- Základní údaje -->
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-slate-50 p-4 sm:p-5 rounded-xl border border-slate-200 text-xs sm:text-sm">

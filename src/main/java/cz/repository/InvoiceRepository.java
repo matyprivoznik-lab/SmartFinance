@@ -33,6 +33,8 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
 
     boolean existsBySourceDocumentAndDocumentKind(Invoice sourceDocument, DocumentKind documentKind);
 
+    List<Invoice> findBySourceDocument(Invoice sourceDocument);
+
     @Query("""
             select count(invoice) from Invoice invoice
             where invoice.user = :user

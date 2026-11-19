@@ -31,7 +31,10 @@ public class TurnoverService {
         LocalDate from = today.minusMonths(12);
         double sum = 0.0;
         for (Invoice invoice : invoiceRepository.findByCompany(company)) {
-            if (invoice.getDocumentKind() != DocumentKind.INVOICE || invoice.getIssueDate() == null) {
+            if (invoice.getDocumentKind() == null || !invoice.getDocumentKind().isTaxDocument() || invoice.getIssueDate() == null) {
+                continue;
+            }
+            if (invoice.getSummaryDocument() != null) {
                 continue;
             }
             if (invoice.getIssueDate().isBefore(from) || invoice.getIssueDate().isAfter(today)) {

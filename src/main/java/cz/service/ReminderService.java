@@ -40,7 +40,7 @@ public class ReminderService {
         for (Company company : companyRepository.findAll()) {
             List<Invoice> invoices = invoiceRepository.findByCompany(company);
             for (Invoice invoice : invoices) {
-                if (invoice.getDocumentKind() == DocumentKind.QUOTE || invoice.getDocumentKind() == DocumentKind.ORDER) {
+                if (invoice.getDocumentKind() != null && !invoice.getDocumentKind().requestsPayment()) {
                     continue;
                 }
                 if (invoice.getStatus() == Invoice.InvoiceStatus.PAID || invoice.getStatus() == Invoice.InvoiceStatus.CANCELLED) {

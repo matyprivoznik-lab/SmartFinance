@@ -38,6 +38,8 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -116,6 +118,7 @@ public class InvoiceController {
         }
 
         model.addAttribute("invoices", invoices);
+        model.addAttribute("clients", clientRepository.findByCompany(company));
         model.addAttribute("invoiceSearch", invoiceSearch);
         model.addAttribute("shownIds", shownIds);
         model.addAttribute("q", q);
@@ -175,9 +178,11 @@ public class InvoiceController {
         model.addAttribute("invoice", newInvoice);
         model.addAttribute("clients", clients);
         model.addAttribute("products", products);
-        model.addAttribute("documentKinds", planQuotaService.isPro(currentUser)
-                ? DocumentKind.values()
-                : new DocumentKind[]{DocumentKind.INVOICE});
+        boolean pro = planQuotaService.isPro(currentUser);
+        model.addAttribute("documentKinds", Arrays.stream(DocumentKind.values())
+                .filter(DocumentKind::issuedOnItsOwn)
+                .filter(item -> pro || item == DocumentKind.INVOICE)
+                .toList());
         model.addAttribute("currencies", planQuotaService.isPro(currentUser)
                 ? List.of("CZK", "EUR", "USD", "GBP")
                 : List.of("CZK"));
@@ -206,6 +211,7 @@ public class InvoiceController {
         }
 
         model.addAttribute("invoice", invoice);
+        model.addAttribute("followUps", invoiceRepository.findBySourceDocument(invoice));
         model.addAttribute("currentUser", currentUser);
         model.addAttribute("paymentIban", qrPaymentService.paymentIban(invoice.getUser()));
         model.addAttribute("qrCodeBase64", qrPaymentService.qrCodeDataUrl(invoice.getUser(), invoice));
@@ -239,6 +245,11 @@ public class InvoiceController {
             invoice.setCurrency("CZK");
         } else {
             invoice.setCurrency(invoice.getCurrency().trim().toUpperCase());
+        }
+        if (isNew && !invoice.getDocumentKind().issuedOnItsOwn()) {
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Tenhle doklad se vystavuje z původní faktury nebo zálohy, ne jako prázdný nový doklad.");
+            return "redirect:/invoices/new";
         }
         if (invoice.getDocumentKind() != DocumentKind.INVOICE && !planQuotaService.isPro(currentUser)) {
             return premium(redirectAttributes);
@@ -306,6 +317,8 @@ public class InvoiceController {
 
     @PostMapping("/invoices/{id}/follow-up")
     public String followUp(@PathVariable("id") Long id,
+                           @RequestParam(value = "kind", required = false) DocumentKind kind,
+                           @RequestParam(value = "amount", required = false) Double amount,
                            @AuthenticationPrincipal UserDetails userDetails,
                            RedirectAttributes redirectAttributes) {
         User currentUser = currentUser(userDetails);
@@ -317,13 +330,50 @@ public class InvoiceController {
         }
         Invoice source = invoiceRepository.findById(id).orElse(null);
         try {
-            Invoice created = documentWorkflowService.followUp(currentUser, source);
-            redirectAttributes.addFlashAttribute("successMessage", created.getDocumentKind().getLabel() + " " + created.getInvoiceNumber() + " je vystavená. Starší doklad zůstal beze změny.");
+            Invoice created = documentWorkflowService.followUp(currentUser, source, kind, amount);
+            redirectAttributes.addFlashAttribute("successMessage", followUpMessage(created));
             return "redirect:/invoices/" + created.getId();
         } catch (IllegalArgumentException ex) {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
             return "redirect:/invoices/" + id;
         }
+    }
+
+    @PostMapping("/invoices/summary")
+    public String summarize(@RequestParam Long clientId,
+                            @RequestParam String month,
+                            @AuthenticationPrincipal UserDetails userDetails,
+                            RedirectAttributes redirectAttributes) {
+        User currentUser = currentUser(userDetails);
+        if (currentUser == null) {
+            return "redirect:/login";
+        }
+        if (!planQuotaService.isPro(currentUser)) {
+            return premium(redirectAttributes);
+        }
+        try {
+            Client client = clientRepository.findById(clientId).orElse(null);
+            Invoice created = documentWorkflowService.summarize(currentUser, client, YearMonth.parse(month));
+            redirectAttributes.addFlashAttribute("successMessage",
+                    "Souhrnný daňový doklad " + created.getInvoiceNumber() + " je vystavený. Sdružuje běžné faktury zvoleného měsíce.");
+            return "redirect:/invoices/" + created.getId();
+        } catch (RuntimeException ex) {
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    ex instanceof IllegalArgumentException ? ex.getMessage() : "Souhrnný doklad se nepodařilo vystavit.");
+            return "redirect:/invoices";
+        }
+    }
+
+    private static String followUpMessage(Invoice created) {
+        String number = created.getInvoiceNumber();
+        return switch (created.getDocumentKind()) {
+            case STORNO -> "Storno " + number + " je vystavené. Původní faktura je zrušená a její hodnota se bere jako nula.";
+            case CREDIT_NOTE -> "Dobropis " + number + " snižuje cenu původní faktury. Ta zůstává v evidenci.";
+            case DEBIT_NOTE -> "Vrubopis " + number + " zvyšuje cenu původní faktury.";
+            case ADVANCE_TAX -> "Daňový doklad k přijaté platbě " + number + " je vystavený. DPH se z něj odvádí ze zálohy.";
+            case SETTLEMENT -> "Vyúčtovací faktura " + number + " odečítá zaplacené zálohy. Do DPH vstupuje jen zbývající rozdíl.";
+            default -> created.getDocumentKind().getLabel() + " " + number + " je vystavená. Starší doklad zůstal beze změny.";
+        };
     }
 
     @GetMapping("/invoices/recurring")

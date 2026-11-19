@@ -22,6 +22,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -90,12 +91,65 @@ class DocumentWorkflowTest {
 
         User actor = user;
         Invoice issued = invoice;
-        Invoice credit = documentWorkflowService.followUp(actor, issued);
+        Invoice storno = documentWorkflowService.followUp(actor, issued, DocumentKind.STORNO, null);
+        assertEquals(DocumentKind.STORNO, storno.getDocumentKind());
+        assertEquals(-12100.0, storno.getGrossTotal(), 0.001);
+        assertEquals(-2100.0, storno.getVatAmount(), 0.001);
+        assertEquals(issued.getId(), storno.getSourceDocument().getId());
+        assertEquals(Invoice.InvoiceStatus.CANCELLED, invoiceRepository.findById(issued.getId()).orElseThrow().getStatus());
+        assertThrows(IllegalArgumentException.class, () -> documentWorkflowService.followUp(actor, issued, DocumentKind.STORNO, null));
+    }
+
+    @Test
+    void creditNoteLowersOnlyTheEnteredAmount() {
+        User user = userRepository.save(user());
+        Client client = client(user);
+        Invoice invoice = invoiceRepository.save(document(user, client, DocumentKind.INVOICE, "202611-010"));
+
+        Invoice credit = documentWorkflowService.followUp(user, invoice, DocumentKind.CREDIT_NOTE, 1000.0);
         assertEquals(DocumentKind.CREDIT_NOTE, credit.getDocumentKind());
-        assertEquals(-12100.0, credit.getGrossTotal(), 0.001);
-        assertEquals(-2100.0, credit.getVatAmount(), 0.001);
-        assertEquals(issued.getId(), credit.getSourceDocument().getId());
-        assertThrows(IllegalArgumentException.class, () -> documentWorkflowService.followUp(actor, issued));
+        assertEquals(-1000.0, credit.getGrossTotal(), 0.001);
+        assertEquals(Invoice.InvoiceStatus.ISSUED, invoiceRepository.findById(invoice.getId()).orElseThrow().getStatus());
+
+        Invoice debit = documentWorkflowService.followUp(user, invoice, DocumentKind.DEBIT_NOTE, 500.0);
+        assertEquals(DocumentKind.DEBIT_NOTE, debit.getDocumentKind());
+        assertEquals(500.0, debit.getGrossTotal(), 0.001);
+        assertThrows(IllegalArgumentException.class,
+                () -> documentWorkflowService.followUp(user, invoice, DocumentKind.CREDIT_NOTE, 20000.0));
+        assertThrows(IllegalArgumentException.class,
+                () -> documentWorkflowService.followUp(user, invoice, DocumentKind.STORNO, null));
+    }
+
+    @Test
+    void settlementDeductsTheTaxDocumentForTheAdvance() {
+        User user = userRepository.save(user());
+        Client client = client(user);
+        Invoice proforma = invoiceRepository.save(document(user, client, DocumentKind.PROFORMA, "Z202611-010"));
+
+        Invoice tax = documentWorkflowService.followUp(user, proforma, DocumentKind.ADVANCE_TAX, null);
+        assertEquals(DocumentKind.ADVANCE_TAX, tax.getDocumentKind());
+        assertEquals(12100.0, tax.getGrossTotal(), 0.001);
+        assertEquals(Invoice.InvoiceStatus.PAID, invoiceRepository.findById(proforma.getId()).orElseThrow().getStatus());
+
+        Invoice settlement = documentWorkflowService.followUp(user, proforma, DocumentKind.SETTLEMENT, null);
+        assertEquals(DocumentKind.SETTLEMENT, settlement.getDocumentKind());
+        assertEquals(0.0, settlement.getGrossTotal(), 0.001);
+        assertEquals(0.0, settlement.getVatAmount(), 0.001);
+    }
+
+    @Test
+    void summaryJoinsOneCustomersInvoicesForTheMonth() {
+        User user = userRepository.save(user());
+        Client client = client(user);
+        Invoice first = invoiceRepository.save(document(user, client, DocumentKind.INVOICE, "202611-021"));
+        invoiceRepository.save(document(user, client, DocumentKind.INVOICE, "202611-022"));
+
+        Invoice summary = documentWorkflowService.summarize(user, client, YearMonth.of(2026, 11));
+        assertEquals(DocumentKind.SUMMARY, summary.getDocumentKind());
+        assertEquals(24200.0, summary.getGrossTotal(), 0.001);
+        assertEquals(summary.getId(), invoiceRepository.findById(first.getId()).orElseThrow().getSummaryDocument().getId());
+        assertThrows(IllegalArgumentException.class,
+                () -> documentWorkflowService.summarize(user, client, YearMonth.of(2026, 11)));
     }
 
     @Test
@@ -154,6 +208,15 @@ class DocumentWorkflowTest {
         user.setEmailVerified(true);
         user.setVatPayer(true);
         return user;
+    }
+
+    private Client client(User user) {
+        Client client = new Client();
+        client.setUser(user);
+        client.setName("Odběratel s.r.o.");
+        client.setAddress("Zákaznická 2");
+        client.setIco("87654321");
+        return clientRepository.save(client);
     }
 
     private Invoice document(User user, Client client, DocumentKind kind, String number) {
