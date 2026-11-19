@@ -8,6 +8,7 @@ import cz.repository.ClientRepository;
 import cz.repository.InvoiceRepository;
 import cz.repository.UserRepository;
 import cz.service.CompanyService;
+import cz.service.DirectorySearch;
 import cz.service.RiskCheckService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -16,7 +17,11 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Controller
 public class ClientController {
@@ -41,7 +46,11 @@ public class ClientController {
 
     // 1. Zobrazení seznamu všech klientů přihlášeného uživatele
     @GetMapping("/clients")
-    public String showClients(@AuthenticationPrincipal UserDetails userDetails, HttpServletRequest request, Model model) {
+    public String showClients(@AuthenticationPrincipal UserDetails userDetails,
+                              HttpServletRequest request,
+                              @RequestParam(value = "q", required = false) String query,
+                              @RequestParam(value = "ico", required = false) String ico,
+                              Model model) {
         if (userDetails == null) {
             return "redirect:/login";
         }
@@ -50,8 +59,7 @@ public class ClientController {
         User currentUser = userRepository.findByEmail(email).orElse(null);
 
         List<Client> clients = clientRepository.findByCompany(companyService.current(currentUser, request));
-
-        model.addAttribute("clients", clients);
+        addClientSearch(model, clients, query, ico);
         model.addAttribute("client", new Client());
         model.addAttribute("newClient", new Client()); // Řeší IllegalStateException v Thymeleafu pro newClient
         model.addAttribute("activePage", "clients");
@@ -104,12 +112,32 @@ public class ClientController {
 
         List<Client> clients = clientRepository.findByCompany(companyService.current(currentUser, request));
 
-        model.addAttribute("clients", clients);
+        addClientSearch(model, clients, null, null);
         model.addAttribute("client", client);
         model.addAttribute("newClient", client); // Pro jistotu, pokud formulář v editačním módu používá newClient
         model.addAttribute("activePage", "clients");
 
         return "clients";
+    }
+
+    private void addClientSearch(Model model, List<Client> clients, String query, String ico) {
+        String q = DirectorySearch.clean(query);
+        String selectedIco = DirectorySearch.clean(ico);
+        Map<Long, String> clientSearch = new HashMap<>();
+        Set<Long> shownIds = new HashSet<>();
+        for (Client client : clients) {
+            clientSearch.put(client.getId(), DirectorySearch.clientText(client));
+            if (DirectorySearch.clientVisible(client, q, selectedIco)) {
+                shownIds.add(client.getId());
+            }
+        }
+        model.addAttribute("clients", clients);
+        model.addAttribute("clientSearch", clientSearch);
+        model.addAttribute("shownIds", shownIds);
+        model.addAttribute("q", q);
+        model.addAttribute("selectedIco", selectedIco);
+        model.addAttribute("totalCount", clients.size());
+        model.addAttribute("shownCount", shownIds.size());
     }
 
     @PostMapping("/clients/{id}/risk")
