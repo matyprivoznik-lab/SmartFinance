@@ -183,7 +183,8 @@ public class QrPaymentService {
         sid.append("DD:").append(invoice.getIssueDate().format(DUE_DATE)).append('*');
         if (invoice.getDocumentKind() == DocumentKind.PROFORMA) {
             sid.append("TD:0*");
-        } else if (invoice.getDocumentKind() == DocumentKind.CREDIT_NOTE) {
+        } else if (invoice.getDocumentKind() == DocumentKind.CREDIT_NOTE
+                || invoice.getDocumentKind() == DocumentKind.STORNO) {
             sid.append("TD:1*");
         }
         if (invoice.getVatRegime() == VatRegime.REVERSE_CHARGE) {

@@ -66,6 +66,10 @@ public class Invoice {
     @JoinColumn(name = "source_document_id")
     private Invoice sourceDocument;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "summary_document_id")
+    private Invoice summaryDocument;
+
     @Column(length = 255)
     private String supplierName;
 
@@ -243,6 +247,8 @@ public class Invoice {
     public void setCzkGrossTotal(Double czkGrossTotal) { this.czkGrossTotal = czkGrossTotal; }
     public Invoice getSourceDocument() { return sourceDocument; }
     public void setSourceDocument(Invoice sourceDocument) { this.sourceDocument = sourceDocument; }
+    public Invoice getSummaryDocument() { return summaryDocument; }
+    public void setSummaryDocument(Invoice summaryDocument) { this.summaryDocument = summaryDocument; }
 
     public String getCustomerName() { return customerName; }
     public void setCustomerName(String customerName) { this.customerName = customerName; }

@@ -66,8 +66,7 @@ public class PaymentMatchService {
         List<Invoice> open = company == null ? List.of() : invoiceRepository.findByCompany(company).stream()
                 .filter(invoice -> invoice.getStatus() != Invoice.InvoiceStatus.PAID
                         && invoice.getStatus() != Invoice.InvoiceStatus.CANCELLED)
-                .filter(invoice -> invoice.getDocumentKind() != DocumentKind.QUOTE
-                        && invoice.getDocumentKind() != DocumentKind.ORDER)
+                .filter(invoice -> invoice.getDocumentKind() == null || invoice.getDocumentKind().requestsPayment())
                 .toList();
         int matched = 0;
         int skipped = 0;
@@ -84,10 +83,10 @@ public class PaymentMatchService {
             invoiceRepository.save(invoice);
             open = open.stream().filter(item -> !item.getId().equals(invoice.getId())).toList();
             matched++;
-            if (invoice.getDocumentKind() == DocumentKind.PROFORMA) {
+            if (invoice.getDocumentKind() == DocumentKind.PROFORMA && user != null && user.isVatPayer()) {
                 try {
-                    documentWorkflowService.followUp(user, invoice);
-                    notes.add("Záloha " + invoice.getInvoiceNumber() + " je uhrazená a vzniklo vyúčtování.");
+                    documentWorkflowService.followUp(user, invoice, DocumentKind.ADVANCE_TAX, null);
+                    notes.add("Záloha " + invoice.getInvoiceNumber() + " je uhrazená a vznikl daňový doklad k přijaté platbě.");
                 } catch (IllegalArgumentException ex) {
                     notes.add("Záloha " + invoice.getInvoiceNumber() + " je uhrazená.");
                 }
