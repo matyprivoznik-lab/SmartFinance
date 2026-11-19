@@ -20,6 +20,7 @@ import cz.service.CompanyService;
 import cz.service.DataRightsService;
 import cz.service.DocumentNumberService;
 import cz.service.DocumentWorkflowService;
+import cz.service.DirectorySearch;
 import cz.service.PlanQuotaService;
 import cz.service.QrPaymentService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -37,7 +38,11 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Controller
 public class InvoiceController {
@@ -85,7 +90,12 @@ public class InvoiceController {
     }
 
     @GetMapping("/invoices")
-    public String showInvoices(@AuthenticationPrincipal UserDetails userDetails, HttpServletRequest request, Model model) {
+    public String showInvoices(@AuthenticationPrincipal UserDetails userDetails,
+                               HttpServletRequest request,
+                               @RequestParam(value = "q", required = false) String query,
+                               @RequestParam(value = "kind", required = false) String kind,
+                               @RequestParam(value = "status", required = false) String status,
+                               Model model) {
         if (userDetails == null) {
             return "redirect:/login";
         }
@@ -93,8 +103,28 @@ public class InvoiceController {
         User currentUser = userRepository.findByEmail(userDetails.getUsername()).orElse(null);
         Company company = companyService.current(currentUser, request);
         List<Invoice> invoices = invoiceRepository.findByCompany(company);
+        String q = DirectorySearch.clean(query);
+        String selectedKind = DirectorySearch.clean(kind);
+        String selectedStatus = DirectorySearch.clean(status);
+        Map<Long, String> invoiceSearch = new HashMap<>();
+        Set<Long> shownIds = new HashSet<>();
+        for (Invoice invoice : invoices) {
+            invoiceSearch.put(invoice.getId(), DirectorySearch.invoiceText(invoice));
+            if (DirectorySearch.invoiceVisible(invoice, q, selectedKind, selectedStatus)) {
+                shownIds.add(invoice.getId());
+            }
+        }
 
         model.addAttribute("invoices", invoices);
+        model.addAttribute("invoiceSearch", invoiceSearch);
+        model.addAttribute("shownIds", shownIds);
+        model.addAttribute("q", q);
+        model.addAttribute("selectedKind", selectedKind);
+        model.addAttribute("selectedStatus", selectedStatus);
+        model.addAttribute("documentKinds", DocumentKind.values());
+        model.addAttribute("invoiceStatuses", Invoice.InvoiceStatus.values());
+        model.addAttribute("totalCount", invoices.size());
+        model.addAttribute("shownCount", shownIds.size());
         model.addAttribute("activePage", "invoices");
         return "invoices";
     }

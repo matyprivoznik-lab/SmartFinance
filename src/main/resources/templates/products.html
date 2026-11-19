@@ -53,6 +53,26 @@
         <!-- Seznam produktů v tabulce -->
         <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200 p-6 overflow-hidden">
             <h2 class="text-lg font-bold text-slate-900 mb-4">Seznam položek</h2>
+            <form id="list-filter" method="get" th:action="@{/products}" class="space-y-3 mb-4">
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <label class="flex-1">
+                        <span class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Hledat</span>
+                        <input type="search" name="q" th:value="${q}" placeholder="Název, jednotka nebo cena" class="w-full px-4 py-2.5 border border-slate-300 rounded-xl text-sm">
+                    </label>
+                    <label>
+                        <span class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Jednotka</span>
+                        <select name="unit" class="w-full sm:w-40 px-3 py-2.5 border border-slate-300 rounded-xl text-sm bg-white">
+                            <option value="">Všechny</option>
+                            <option th:each="storedUnit : ${units}" th:value="${storedUnit}" th:text="${storedUnit}" th:selected="${storedUnit == selectedUnit}"></option>
+                        </select>
+                    </label>
+                </div>
+                <div class="flex flex-wrap items-center gap-3 text-sm">
+                    <button type="submit" class="btn-primary px-4 py-2 text-sm">Hledat</button>
+                    <a th:if="${!q.isEmpty() or !selectedUnit.isEmpty()}" href="/products" class="font-semibold text-slate-500 hover:text-slate-800">Zrušit filtr</a>
+                    <p class="text-slate-500">Zobrazeno <span id="filter-count" th:text="${shownCount}">0</span> z <span th:text="${totalCount}">0</span></p>
+                </div>
+            </form>
 
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
@@ -65,10 +85,16 @@
                     </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 text-sm">
-                    <tr th:if="${products.empty}">
+                    <tr th:if="${totalCount == 0}">
                         <td colspan="4" class="py-8 text-center text-slate-400">Zatím nemáš na skladě žádné položky.</td>
                     </tr>
-                    <tr th:each="product : ${products}" class="hover:bg-slate-50/50 transition">
+                    <tr id="filter-empty" th:if="${totalCount > 0}" th:hidden="${shownCount > 0}">
+                        <td colspan="4" class="py-8 text-center text-slate-400">Tomuhle filtru nevyhovuje žádná položka.</td>
+                    </tr>
+                    <tr th:each="product : ${products}" class="hover:bg-slate-50/50 transition"
+                        th:classappend="${!shownIds.contains(product.id)} ? 'is-filtered-out' : ''"
+                        th:data-search="${productSearch[product.id]}"
+                        th:data-unit="${product.unit != null ? product.unit.trim() : ''}">
                         <td class="py-4 px-3 font-semibold text-slate-900" th:text="${product.name}">Název</td>
                         <td class="py-4 px-3 text-slate-600" th:text="${product.unitPriceGross + ' Kč'}">0 Kč</td>
                         <td class="py-4 px-3 text-slate-600 font-medium" th:text="${product.unit != null && !product.unit.isBlank() ? product.unit : '-'}">ks</td>
@@ -92,6 +118,7 @@
 </main>
 
 <div th:replace="~{fragments/footer :: main-footer}"></div>
+<script th:src="@{/js/list-filter.js}"></script>
 
 </body>
 </html>
