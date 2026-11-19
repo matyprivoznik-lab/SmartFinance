@@ -106,16 +106,30 @@ class DocumentWorkflowTest {
         Client client = client(user);
         Invoice invoice = invoiceRepository.save(document(user, client, DocumentKind.INVOICE, "202611-010"));
 
-        Invoice credit = documentWorkflowService.followUp(user, invoice, DocumentKind.CREDIT_NOTE, 1000.0);
+        Long itemId = invoice.getItems().get(0).getId();
+        Invoice credit = documentWorkflowService.correct(user, invoice, DocumentKind.CREDIT_NOTE, null,
+                java.util.List.of(new DocumentWorkflowService.LineChange(itemId, 1000.0, "Vrácení zboží")));
         assertEquals(DocumentKind.CREDIT_NOTE, credit.getDocumentKind());
         assertEquals(-1000.0, credit.getGrossTotal(), 0.001);
+        assertTrue(credit.getItems().get(0).getDescription().contains("Vrácení zboží"));
+        assertTrue(credit.getItems().get(0).getDescription().contains("Služba"));
+        assertTrue(credit.getItems().get(0).getDescription().contains("202611-010"));
         assertEquals(Invoice.InvoiceStatus.ISSUED, invoiceRepository.findById(invoice.getId()).orElseThrow().getStatus());
 
-        Invoice debit = documentWorkflowService.followUp(user, invoice, DocumentKind.DEBIT_NOTE, 500.0);
+        Invoice debit = documentWorkflowService.correct(user, invoice, DocumentKind.DEBIT_NOTE, "Doúčtování za celou zakázku",
+                java.util.List.of(new DocumentWorkflowService.LineChange(itemId, 500.0, "")));
         assertEquals(DocumentKind.DEBIT_NOTE, debit.getDocumentKind());
         assertEquals(500.0, debit.getGrossTotal(), 0.001);
+        assertTrue(debit.getItems().get(0).getDescription().contains("Doúčtování za celou zakázku"));
+        assertEquals("Doúčtování za celou zakázku", debit.getDocumentNote());
         assertThrows(IllegalArgumentException.class,
-                () -> documentWorkflowService.followUp(user, invoice, DocumentKind.CREDIT_NOTE, 20000.0));
+                () -> documentWorkflowService.correct(user, invoice, DocumentKind.CREDIT_NOTE, null,
+                        java.util.List.of(new DocumentWorkflowService.LineChange(itemId, 20000.0, "Moc velká sleva"))));
+
+        Invoice storno = documentWorkflowService.followUp(user, invoice, DocumentKind.STORNO, null);
+        assertEquals(DocumentKind.STORNO, storno.getDocumentKind());
+        assertEquals(-11600.0, storno.getGrossTotal(), 0.001);
+        assertEquals(Invoice.InvoiceStatus.CANCELLED, invoiceRepository.findById(invoice.getId()).orElseThrow().getStatus());
         assertThrows(IllegalArgumentException.class,
                 () -> documentWorkflowService.followUp(user, invoice, DocumentKind.STORNO, null));
     }
