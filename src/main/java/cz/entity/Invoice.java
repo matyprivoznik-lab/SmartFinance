@@ -23,6 +23,9 @@ public class Invoice {
     private String constantSymbol;
     private String paymentMethod = "Bankovní převod";
 
+    @Column(length = 1000)
+    private String documentNote;
+
     private LocalDate issueDate;
     private LocalDate dueDate;
     private LocalDate paidAt;
@@ -121,6 +124,9 @@ public class Invoice {
 
     public String getConstantSymbol() { return constantSymbol; }
     public void setConstantSymbol(String constantSymbol) { this.constantSymbol = constantSymbol; }
+
+    public String getDocumentNote() { return documentNote; }
+    public void setDocumentNote(String documentNote) { this.documentNote = documentNote; }
 
     public String getPaymentMethod() { return paymentMethod; }
     public void setPaymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; }

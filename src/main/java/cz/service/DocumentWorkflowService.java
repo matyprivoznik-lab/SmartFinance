@@ -16,7 +16,9 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class DocumentWorkflowService {
@@ -41,7 +43,12 @@ public class DocumentWorkflowService {
         source = lockedSource(user, source);
         DocumentKind target = requested == null ? defaultTarget(source.getDocumentKind()) : requested;
         if (target == DocumentKind.CREDIT_NOTE || target == DocumentKind.DEBIT_NOTE) {
-            return correction(user, source, target, amount);
+            if (amount == null) {
+                throw new IllegalArgumentException("U položky zadej rozdíl částky a důvod opravy.");
+            }
+            Long itemId = firstItemId(source);
+            String reason = target == DocumentKind.CREDIT_NOTE ? "Snížení ceny" : "Zvýšení ceny";
+            return correct(user, source, target, null, List.of(new LineChange(itemId, amount, reason)));
         }
         if (target == DocumentKind.STORNO) {
             return storno(user, source);
@@ -116,43 +123,121 @@ public class DocumentWorkflowService {
         return saved;
     }
 
-    private Invoice correction(User user, Invoice source, DocumentKind target, Double amount) {
+    @Transactional
+    public Invoice correct(User user, Invoice source, DocumentKind target, String note, List<LineChange> lines) {
+        source = lockedSource(user, source);
+        if (target != DocumentKind.CREDIT_NOTE && target != DocumentKind.DEBIT_NOTE) {
+            throw new IllegalArgumentException("Tak se vystavuje jen dobropis nebo vrubopis.");
+        }
         requireOpenTaxInvoice(source);
         rejectWhenStornoExists(source);
-        if (amount == null || amount <= 0.0) {
-            throw new IllegalArgumentException(target == DocumentKind.CREDIT_NOTE
-                    ? "Zadej částku, o kterou se má cena snížit."
-                    : "Zadej částku, o kterou se má cena zvýšit.");
+        String header = cleanNote(note);
+        if (lines == null || lines.isEmpty()) {
+            throw new IllegalArgumentException("U položky zadej rozdíl částky a důvod opravy.");
         }
-        double gross = source.getGrossTotal() == null ? 0.0 : Math.abs(source.getGrossTotal());
-        if (target == DocumentKind.CREDIT_NOTE) {
-            double already = credited(source);
-            if (already + amount > gross + 0.01) {
-                throw new IllegalArgumentException("Dobropis nesmí snížit fakturu pod nulu. Zbývá " + money(gross - already) + " Kč.");
+        Invoice created = shell(user, source, target, LocalDate.now(ZONE));
+        created.setDocumentNote(header);
+        boolean any = false;
+        for (LineChange change : lines) {
+            if (change == null || change.amount() == null || change.amount() <= 0.0) {
+                continue;
             }
+            InvoiceItem sourceItem = itemOf(source, change.itemId());
+            String reason = change.reason() == null ? "" : change.reason().trim();
+            if (reason.isEmpty()) {
+                reason = header == null ? "" : header;
+            }
+            if (reason.isEmpty()) {
+                throw new IllegalArgumentException("U položky „" + labelOf(sourceItem) + "“ chybí důvod opravy.");
+            }
+            if (reason.length() > 300) {
+                reason = reason.substring(0, 300);
+            }
+            double amount = change.amount();
+            if (target == DocumentKind.CREDIT_NOTE) {
+                double room = Math.abs(lineGross(sourceItem)) - creditedOnItem(source, sourceItem.getId());
+                if (amount > room + 0.01) {
+                    throw new IllegalArgumentException("Dobropis u položky „" + labelOf(sourceItem) + "“ může snížit ještě " + money(room) + " Kč.");
+                }
+            }
+            InvoiceItem line = new InvoiceItem();
+            line.setDescription(reason + " – " + labelOf(sourceItem) + " (k faktuře č. " + source.getInvoiceNumber() + ")");
+            line.setQuantity(target == DocumentKind.CREDIT_NOTE ? -1.0 : 1.0);
+            line.setUnitPriceGross(amount);
+            line.setVatRate(sourceItem.getVatRate() == null ? firstRate(source) : sourceItem.getVatRate());
+            line.setSourceItemId(sourceItem.getId());
+            created.addItem(line);
+            any = true;
         }
-        once(source, target);
-        LocalDate today = LocalDate.now(ZONE);
-        Invoice created = shell(user, source, target, today);
-        InvoiceItem line = new InvoiceItem();
-        line.setDescription((target == DocumentKind.CREDIT_NOTE ? "Snížení ceny k faktuře " : "Zvýšení ceny k faktuře ")
-                + source.getInvoiceNumber());
-        line.setQuantity(target == DocumentKind.CREDIT_NOTE ? -1.0 : 1.0);
-        line.setUnitPriceGross(amount);
-        line.setVatRate(firstRate(source));
-        created.addItem(line);
+        if (!any) {
+            throw new IllegalArgumentException("U položky zadej rozdíl částky a důvod opravy. Novou cenu nepiš, jen o kolik se mění.");
+        }
         DocumentPricing.apply(created);
         return invoiceRepository.save(created);
     }
 
     private Invoice storno(User user, Invoice source) {
         requireOpenTaxInvoice(source);
-        if (invoiceRepository.existsBySourceDocumentAndDocumentKind(source, DocumentKind.CREDIT_NOTE)
-                || invoiceRepository.existsBySourceDocumentAndDocumentKind(source, DocumentKind.DEBIT_NOTE)) {
-            throw new IllegalArgumentException("Nejdřív jsou na faktuře dobropis nebo vrubopis. Storno se vystavuje, když se má celá faktura zrušit od začátku.");
-        }
         once(source, DocumentKind.STORNO);
-        Invoice created = copy(user, source, DocumentKind.STORNO, -1.0, LocalDate.now(ZONE));
+        Map<Long, Double> byItem = new HashMap<>();
+        double loose = 0.0;
+        boolean hasCorrections = false;
+        for (Invoice child : invoiceRepository.findBySourceDocument(source)) {
+            if (child.getDocumentKind() != DocumentKind.CREDIT_NOTE && child.getDocumentKind() != DocumentKind.DEBIT_NOTE) {
+                continue;
+            }
+            hasCorrections = true;
+            if (child.getItems() == null) {
+                continue;
+            }
+            for (InvoiceItem item : child.getItems()) {
+                if (item.getSourceItemId() != null) {
+                    byItem.merge(item.getSourceItemId(), lineGross(item), Double::sum);
+                } else {
+                    loose += lineGross(item);
+                }
+            }
+        }
+        Invoice created;
+        if (!hasCorrections) {
+            created = copy(user, source, DocumentKind.STORNO, -1.0, LocalDate.now(ZONE));
+            if (created.getItems() != null) {
+                for (InvoiceItem item : created.getItems()) {
+                    item.setDescription("Úplné zrušení – " + labelOf(item) + " (k faktuře č. " + source.getInvoiceNumber() + ")");
+                }
+            }
+        } else {
+            created = shell(user, source, DocumentKind.STORNO, LocalDate.now(ZONE));
+            if (source.getItems() != null) {
+                for (InvoiceItem item : source.getItems()) {
+                    double remaining = lineGross(item) + byItem.getOrDefault(item.getId(), 0.0);
+                    if (Math.abs(remaining) < 0.01) {
+                        continue;
+                    }
+                    created.addItem(reversal(item, remaining, source.getInvoiceNumber()));
+                }
+            }
+            if (Math.abs(loose) >= 0.01) {
+                InvoiceItem line = new InvoiceItem();
+                line.setDescription("Úplné zrušení zbývající opravy (k faktuře č. " + source.getInvoiceNumber() + ")");
+                line.setQuantity(loose > 0 ? -1.0 : 1.0);
+                line.setUnitPriceGross(Math.abs(loose));
+                line.setVatRate(firstRate(source));
+                created.addItem(line);
+            }
+            if (created.getItems() == null || created.getItems().isEmpty()) {
+                InvoiceItem line = new InvoiceItem();
+                line.setDescription("Úplné zrušení faktury č. " + source.getInvoiceNumber() + ". Opravy už její hodnotu vynulovaly.");
+                line.setQuantity(-1.0);
+                line.setUnitPriceGross(0.0);
+                line.setVatRate(0.0);
+                created.addItem(line);
+            }
+            DocumentPricing.apply(created);
+            created = invoiceRepository.save(created);
+        }
+        created.setDocumentNote("Úplné zrušení faktury č. " + source.getInvoiceNumber() + " od samého počátku.");
+        invoiceRepository.save(created);
         source.setStatus(Invoice.InvoiceStatus.CANCELLED);
         invoiceRepository.save(source);
         return created;
@@ -317,14 +402,77 @@ public class DocumentWorkflowService {
         }
     }
 
-    private double credited(Invoice source) {
+    private double creditedOnItem(Invoice source, Long itemId) {
         double sum = 0.0;
         for (Invoice child : invoiceRepository.findBySourceDocument(source)) {
-            if (child.getDocumentKind() == DocumentKind.CREDIT_NOTE && child.getGrossTotal() != null) {
-                sum += Math.abs(child.getGrossTotal());
+            if (child.getDocumentKind() != DocumentKind.CREDIT_NOTE || child.getItems() == null) {
+                continue;
+            }
+            for (InvoiceItem item : child.getItems()) {
+                if (itemId != null && itemId.equals(item.getSourceItemId())) {
+                    sum += Math.abs(lineGross(item));
+                }
             }
         }
         return sum;
+    }
+
+    private static InvoiceItem reversal(InvoiceItem sourceItem, double remaining, String invoiceNumber) {
+        InvoiceItem line = new InvoiceItem();
+        line.setDescription("Úplné zrušení – " + labelOf(sourceItem) + " (k faktuře č. " + invoiceNumber + ")");
+        line.setQuantity(remaining > 0 ? -1.0 : 1.0);
+        line.setUnitPriceGross(Math.abs(remaining));
+        line.setVatRate(sourceItem.getVatRate() == null ? 21.0 : sourceItem.getVatRate());
+        line.setSourceItemId(sourceItem.getId());
+        return line;
+    }
+
+    private static Long firstItemId(Invoice source) {
+        if (source.getItems() == null || source.getItems().isEmpty() || source.getItems().get(0).getId() == null) {
+            throw new IllegalArgumentException("Faktura nemá položku, kterou by šlo opravit.");
+        }
+        return source.getItems().get(0).getId();
+    }
+
+    private static InvoiceItem itemOf(Invoice source, Long itemId) {
+        if (source.getItems() != null && itemId != null) {
+            for (InvoiceItem item : source.getItems()) {
+                if (itemId.equals(item.getId())) {
+                    return item;
+                }
+            }
+        }
+        throw new IllegalArgumentException("Položka na původní faktuře nebyla nalezena.");
+    }
+
+    private static String labelOf(InvoiceItem item) {
+        if (item == null || item.getDescription() == null || item.getDescription().isBlank()) {
+            return "Položka";
+        }
+        return item.getDescription().trim();
+    }
+
+    private static double lineGross(InvoiceItem item) {
+        if (item.getLineGrossTotal() != null && item.getLineGrossTotal() != 0.0) {
+            return item.getLineGrossTotal();
+        }
+        double quantity = item.getQuantity() == null ? 1.0 : item.getQuantity();
+        double price = item.getUnitPriceGross() == null ? 0.0 : item.getUnitPriceGross();
+        return Math.round(quantity * price * 100.0) / 100.0;
+    }
+
+    private static String cleanNote(String note) {
+        if (note == null) {
+            return null;
+        }
+        String trimmed = note.trim();
+        if (trimmed.isEmpty()) {
+            return null;
+        }
+        return trimmed.length() <= 500 ? trimmed : trimmed.substring(0, 500);
+    }
+
+    public record LineChange(Long itemId, Double amount, String reason) {
     }
 
     private static double firstRate(Invoice invoice) {

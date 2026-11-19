@@ -319,6 +319,10 @@ public class InvoiceController {
     public String followUp(@PathVariable("id") Long id,
                            @RequestParam(value = "kind", required = false) DocumentKind kind,
                            @RequestParam(value = "amount", required = false) Double amount,
+                           @RequestParam(value = "note", required = false) String note,
+                           @RequestParam(value = "itemId", required = false) List<Long> itemIds,
+                           @RequestParam(value = "lineAmount", required = false) List<String> lineAmounts,
+                           @RequestParam(value = "lineReason", required = false) List<String> lineReasons,
                            @AuthenticationPrincipal UserDetails userDetails,
                            RedirectAttributes redirectAttributes) {
         User currentUser = currentUser(userDetails);
@@ -330,13 +334,41 @@ public class InvoiceController {
         }
         Invoice source = invoiceRepository.findById(id).orElse(null);
         try {
-            Invoice created = documentWorkflowService.followUp(currentUser, source, kind, amount);
+            Invoice created = kind == DocumentKind.CREDIT_NOTE || kind == DocumentKind.DEBIT_NOTE
+                    ? documentWorkflowService.correct(currentUser, source, kind, note, correctionLines(itemIds, lineAmounts, lineReasons, amount))
+                    : documentWorkflowService.followUp(currentUser, source, kind, amount);
             redirectAttributes.addFlashAttribute("successMessage", followUpMessage(created));
             return "redirect:/invoices/" + created.getId();
         } catch (IllegalArgumentException ex) {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
             return "redirect:/invoices/" + id;
         }
+    }
+
+    private static List<DocumentWorkflowService.LineChange> correctionLines(List<Long> itemIds,
+                                                                             List<String> lineAmounts,
+                                                                             List<String> lineReasons,
+                                                                             Double amount) {
+        List<DocumentWorkflowService.LineChange> lines = new java.util.ArrayList<>();
+        int size = itemIds == null ? 0 : itemIds.size();
+        for (int i = 0; i < size; i++) {
+            String raw = lineAmounts != null && i < lineAmounts.size() ? lineAmounts.get(i) : null;
+            if (raw == null || raw.isBlank()) {
+                continue;
+            }
+            double parsed;
+            try {
+                parsed = Double.parseDouble(raw.trim().replace(',', '.'));
+            } catch (NumberFormatException ex) {
+                throw new IllegalArgumentException("Rozdíl částky zadej jako číslo.");
+            }
+            String reason = lineReasons != null && i < lineReasons.size() ? lineReasons.get(i) : null;
+            lines.add(new DocumentWorkflowService.LineChange(itemIds.get(i), parsed, reason));
+        }
+        if (lines.isEmpty() && amount != null) {
+            lines.add(new DocumentWorkflowService.LineChange(null, amount, null));
+        }
+        return lines;
     }
 
     @PostMapping("/invoices/summary")

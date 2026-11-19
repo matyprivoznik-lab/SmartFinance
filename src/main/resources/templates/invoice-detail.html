@@ -81,6 +81,7 @@
                 </h1>
                 <p class="text-sm text-gray-600 mt-2" th:text="${invoice.documentKind.description}"></p>
                 <p class="text-sm text-gray-500 mt-1" th:text="${invoice.documentKind.taxImpact}"></p>
+                <p class="text-sm text-gray-800 mt-2" th:if="${invoice.documentNote != null and !invoice.documentNote.isBlank()}" th:text="${invoice.documentNote}"></p>
                 <p class="text-sm text-gray-500 mt-1" th:if="${invoice.vatRegime != null}" th:text="${invoice.vatRegime.label + ' — ' + invoice.vatRegime.description}"></p>
                 <p class="text-sm text-gray-500 mt-1"
                    th:if="${invoice.variableSymbol != null}"
@@ -170,27 +171,35 @@
                     <button type="submit" class="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg">Vyúčtovací faktura</button>
                 </form>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-3" th:if="${invoice.documentKind.name() == 'INVOICE' or invoice.documentKind.name() == 'SETTLEMENT' or invoice.documentKind.name() == 'SUMMARY'}">
-                <form th:action="@{'/invoices/' + ${invoice.id} + '/follow-up'}" method="post" class="bg-amber-50 border border-amber-200 rounded-xl p-3 space-y-2">
-                    <input type="hidden" name="kind" value="CREDIT_NOTE">
-                    <label class="block text-xs font-bold text-amber-900">Dobropis, snížení ceny
-                        <input name="amount" type="number" min="0.01" step="0.01" required placeholder="Částka v Kč" class="mt-1 w-full px-3 py-2 border border-amber-200 rounded-lg text-sm">
-                    </label>
-                    <button type="submit" class="px-3 py-2 bg-amber-600 text-white text-sm font-semibold rounded-lg">Vystavit dobropis</button>
-                </form>
-                <form th:action="@{'/invoices/' + ${invoice.id} + '/follow-up'}" method="post" class="bg-sky-50 border border-sky-200 rounded-xl p-3 space-y-2">
-                    <input type="hidden" name="kind" value="DEBIT_NOTE">
-                    <label class="block text-xs font-bold text-sky-900">Vrubopis, zvýšení ceny
-                        <input name="amount" type="number" min="0.01" step="0.01" required placeholder="Částka v Kč" class="mt-1 w-full px-3 py-2 border border-sky-200 rounded-lg text-sm">
-                    </label>
-                    <button type="submit" class="px-3 py-2 bg-sky-700 text-white text-sm font-semibold rounded-lg">Vystavit vrubopis</button>
-                </form>
-                <form th:action="@{'/invoices/' + ${invoice.id} + '/follow-up'}" method="post" class="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2" onsubmit="return confirm('Storno zruší celou fakturu od začátku a její hodnota se bude brát jako nula. Pokračovat?')">
-                    <input type="hidden" name="kind" value="STORNO">
-                    <p class="text-xs text-slate-600">Storno zruší celou fakturu, jako by nikdy nevznikla. Hodnota se vynuluje.</p>
-                    <button type="submit" class="px-3 py-2 bg-slate-800 text-white text-sm font-semibold rounded-lg">Storno faktury</button>
-                </form>
-            </div>
+            <form th:if="${invoice.documentKind.name() == 'INVOICE' or invoice.documentKind.name() == 'SETTLEMENT' or invoice.documentKind.name() == 'SUMMARY'}" th:action="@{'/invoices/' + ${invoice.id} + '/follow-up'}" method="post" class="bg-white border border-slate-200 rounded-xl p-4 space-y-3">
+                <input type="hidden" name="kind" id="correction-kind" value="CREDIT_NOTE">
+                <div>
+                    <h2 class="text-sm font-bold text-slate-900">Dobropis nebo vrubopis po položkách</h2>
+                    <p class="text-xs text-slate-500 mt-1">Piš jen položky, které se mění, a jen rozdíl částky včetně DPH. Dobropis jde do mínusu, vrubopis do plusu. U každé opravy musí být důvod, nebo jedna poznámka k celé faktuře. Novou výslednou cenu sem nepiš.</p>
+                </div>
+                <label class="block text-xs font-bold text-slate-600">Poznámka k celé opravě
+                    <input name="note" maxlength="500" placeholder="Třeba dodatečná sleva na celou zakázku" class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-normal">
+                </label>
+                <div class="space-y-3">
+                    <div th:each="item : ${invoice.items}" class="grid grid-cols-1 md:grid-cols-12 gap-2 items-end border border-slate-100 rounded-lg p-3">
+                        <input type="hidden" name="itemId" th:value="${item.id}">
+                        <div class="md:col-span-4">
+                            <p class="text-sm font-semibold text-slate-900" th:text="${item.description}">Položka</p>
+                            <p class="text-xs text-slate-500" th:text="'Původně ' + ${#numbers.formatDecimal(item.lineGrossTotal != null ? item.lineGrossTotal : (item.quantity * item.unitPriceGross), 1, 'WHITESPACE', 2, 'POINT')} + ' Kč vč. DPH'"></p>
+                        </div>
+                        <label class="md:col-span-3 text-xs font-bold text-slate-600">Rozdíl v Kč vč. DPH
+                            <input name="lineAmount" type="number" min="0.01" step="0.01" placeholder="0,00" class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-normal">
+                        </label>
+                        <label class="md:col-span-5 text-xs font-bold text-slate-600">Důvod opravy
+                            <input name="lineReason" maxlength="300" placeholder="Vrácení zboží, reklamace, sleva…" class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-normal">
+                        </label>
+                    </div>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <button type="submit" class="px-4 py-2 bg-amber-600 text-white text-sm font-semibold rounded-lg" onclick="document.getElementById('correction-kind').value='CREDIT_NOTE'">Vystavit dobropis</button>
+                    <button type="submit" class="px-4 py-2 bg-sky-700 text-white text-sm font-semibold rounded-lg" onclick="document.getElementById('correction-kind').value='DEBIT_NOTE'">Vystavit vrubopis</button>
+                </div>
+            </form>
         </section>
 
         <!-- Tabulka položek -->

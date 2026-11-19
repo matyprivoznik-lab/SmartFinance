@@ -25,6 +25,9 @@ public class InvoiceItem {
     @Column(name = "total")
     private Double lineGrossTotal;
 
+    @Column(name = "source_item_id")
+    private Long sourceItemId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "invoice_id")
     private Invoice invoice;
@@ -58,6 +61,9 @@ public class InvoiceItem {
         }
         return 0.0;
     }
+
+    public Long getSourceItemId() { return sourceItemId; }
+    public void setSourceItemId(Long sourceItemId) { this.sourceItemId = sourceItemId; }
 
     public Invoice getInvoice() { return invoice; }
     public void setInvoice(Invoice invoice) { this.invoice = invoice; }

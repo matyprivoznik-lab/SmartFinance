@@ -150,9 +150,17 @@
                         <td class="py-4 px-6 text-right font-bold text-slate-900"
                             th:text="${#numbers.formatDecimal(invoice.grossTotal, 1, 'WHITESPACE', 2, 'POINT') + ' Kč'}">12 100.00 Kč</td>
                         <td class="py-4 px-6 text-center">
-                            <a th:href="@{'/invoices/' + ${invoice.id}}" class="text-xs font-semibold bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-600 px-3 py-1.5 rounded-lg transition border border-slate-200">
-                                Detail
-                            </a>
+                            <div class="inline-flex items-center gap-2">
+                                <a th:href="@{'/invoices/' + ${invoice.id}}" class="text-xs font-semibold bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-600 px-3 py-1.5 rounded-lg transition border border-slate-200">
+                                    Detail
+                                </a>
+                                <form th:if="${isPro and (invoice.documentKind.name() == 'INVOICE' or invoice.documentKind.name() == 'SETTLEMENT' or invoice.documentKind.name() == 'SUMMARY') and (invoice.status == null or invoice.status.name() != 'CANCELLED')}"
+                                      th:action="@{'/invoices/' + ${invoice.id} + '/follow-up'}" method="post"
+                                      onsubmit="return confirm('Storno zruší celou fakturu od začátku. Když už má dobropis nebo vrubopis, dorovná zbytek na nulu. Pokračovat?')">
+                                    <input type="hidden" name="kind" value="STORNO">
+                                    <button type="submit" class="text-xs font-semibold bg-slate-800 text-white px-3 py-1.5 rounded-lg">Storno</button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                     </tbody>
