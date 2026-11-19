@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>mujDokladomat - Finanční analytika</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <th:block th:replace="~{fragments/assets :: head}"></th:block>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
-<body class="min-h-screen flex flex-col justify-between bg-slate-100">
+<body class="min-h-screen flex flex-col justify-between">
 
 <div th:replace="~{fragments/header :: main-header}"></div>
 
@@ -16,7 +16,7 @@
 <main class="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-10 flex-1 w-full space-y-6 sm:space-y-8">
 
     <div>
-        <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Přehledy a grafy</h1>
+        <h1 class="text-2xl font-black text-slate-900">Přehledy a grafy</h1>
         <p class="text-xs sm:text-sm text-[var(--text-muted)] mt-1">Detailní analýza vašich příjmů, obratu a vybraného DPH.</p>
     </div>
 

@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=Syne:wght@600;700;800&display=swap");
+
 /* ── Shared design tokens ───────────────────────────────────────── */
 :root {
     --bg-main: #f0f4f8;
@@ -736,3 +738,34 @@ body {
         border-radius: 0 !important;
     }
 }
+
+/* App pages use the same type and teal as the landing and the invoice list. */
+body,
+.font-sans {
+    font-family: var(--font-body) !important;
+}
+
+h1,
+.h1,
+.page-title {
+    font-family: var(--font-display);
+    letter-spacing: -0.03em;
+}
+
+.bg-blue-100 { background-color: var(--primary-light) !important; }
+.bg-blue-600 { background-color: var(--primary) !important; }
+input.text-blue-600,
+input.text-blue-700 {
+    accent-color: var(--primary);
+}
+.hover\:bg-blue-700:hover { background-color: var(--primary-hover) !important; }
+.text-blue-600,
+.hover\:text-blue-600:hover { color: var(--primary) !important; }
+.text-blue-700 { color: var(--primary-hover) !important; }
+.bg-blue-50,
+.hover\:bg-blue-50:hover { background-color: var(--primary-light) !important; }
+.border-blue-200 { border-color: color-mix(in srgb, var(--primary) 35%, white) !important; }
+.focus\:ring-blue-500:focus,
+.focus\:ring-blue-600:focus { --tw-ring-color: var(--primary) !important; }
+.focus\:border-blue-500:focus { border-color: var(--primary) !important; }
+.shadow-blue-600\/20 { --tw-shadow-color: rgba(13, 148, 136, 0.2) !important; }

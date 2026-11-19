@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="'Faktura ' + ${invoice.invoiceNumber}">Faktura VF-2026001</title>
-    <link rel="stylesheet" th:href="@{/css/style.css}">
     <script src="https://cdn.tailwindcss.com"></script>
+    <th:block th:replace="~{fragments/assets :: head}"></th:block>
     <style>
         @media print {
             .no-print {
@@ -22,7 +22,7 @@
         }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen text-gray-800 font-sans antialiased">
+<body class="font-sans leading-normal tracking-normal min-h-screen flex flex-col text-slate-800">
 
 <!-- Hlavní navigace / Header (nekreslí se při tisku) -->
 <div class="no-print mb-6">
@@ -218,5 +218,6 @@
     </div>
 </main>
 
+<div th:replace="~{fragments/footer :: main-footer}"></div>
 </body>
 </html>

@@ -1,17 +1,18 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="cs">
 <head>
     <title>Daňový přehled</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="https://cdn.tailwindcss.com"></script>
+    <th:block th:replace="~{fragments/assets :: head}"></th:block>
 </head>
-<body class="bg-gray-50 font-sans leading-normal tracking-normal min-h-screen flex flex-col">
+<body class="font-sans leading-normal tracking-normal min-h-screen flex flex-col">
 <div th:replace="~{fragments/header :: main-header}"></div>
 <main class="container mx-auto px-4 sm:px-6 py-8 flex-grow max-w-2xl w-full">
-    <div class="bg-white p-6 sm:p-8 rounded-xl shadow-sm border border-gray-200 space-y-4">
-        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Podklad pro daňové přiznání</h1>
-        <div class="space-y-2 text-sm text-gray-700">
+    <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+        <h1 class="text-2xl font-black text-slate-900 mb-2">Podklad pro daňové přiznání</h1>
+        <div class="space-y-2 text-sm text-slate-600">
             <p>Rok: <span class="font-semibold text-gray-900" th:text="${summary.year}">2026</span></p>
             <p>Celkové příjmy: <span class="font-semibold text-gray-900" th:text="${summary.taxableRevenue}">0</span> Kč</p>
             <p>Paušální výdaje: <span class="font-semibold text-gray-900" th:text="${summary.flatExpenses}">0</span> Kč</p>
