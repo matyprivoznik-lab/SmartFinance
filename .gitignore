@@ -21,6 +21,7 @@ Desktop.ini
 .env.*
 !.env.example
 application-local.properties
+application.properties
 
 # H2 / local DB
 *.db
