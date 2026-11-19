@@ -5,8 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="https://cdn.tailwindcss.com"></script>
+    <th:block th:replace="~{fragments/assets :: head}"></th:block>
 </head>
-<body class="bg-slate-50 min-h-screen">
+<body class="font-sans leading-normal tracking-normal min-h-screen flex flex-col">
 <div th:replace="~{fragments/header :: main-header}"></div>
 <main class="max-w-3xl mx-auto px-4 py-8 space-y-6">
     <h1 class="text-2xl font-black text-slate-900">Přišla platba?</h1>
@@ -79,5 +80,6 @@
         if (select) select.addEventListener('change', copy);
     })();
 </script>
+<div th:replace="~{fragments/footer :: main-footer}"></div>
 </body>
 </html>

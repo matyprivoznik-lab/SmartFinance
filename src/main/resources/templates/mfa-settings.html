@@ -1,16 +1,19 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="cs">
 <head>
     <meta charset="UTF-8">
     <title>Nastavení 2FA | mujDokladomat</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <th:block th:replace="~{fragments/assets :: head}"></th:block>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body class="font-sans leading-normal tracking-normal min-h-screen flex flex-col">
 
-<!-- Hlavní kontejner -->
-<div class="max-w-4xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
-    <h1 class="text-3xl font-bold text-gray-900 mb-8">Zabezpečení účtu (2FA)</h1>
+<div th:replace="~{fragments/header :: main-header}"></div>
+
+<main class="container mx-auto px-4 sm:px-6 py-8 flex-grow">
+<div class="max-w-3xl mx-auto">
+    <h1 class="text-2xl font-black text-slate-900 mb-6">Zabezpečení účtu (2FA)</h1>
 
     <!-- Hlášky -->
     <div th:if="${param.success == 'enabled'}" class="mb-6 p-4 bg-green-50 border-l-4 border-green-500 text-green-700 rounded">
@@ -24,9 +27,9 @@
     </div>
 
     <!-- STAV A: 2FA je neaktivní (Zobrazit QR kód + aktivace) -->
-    <div th:if="${!user.mfaEnabled}" class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-        <h2 class="text-xl font-semibold text-gray-800 mb-4">Aktivovat dvoufázové ověření</h2>
-        <p class="text-gray-600 mb-6">
+    <div th:if="${!user.mfaEnabled}" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+        <h2 class="text-xl font-black text-slate-900 mb-4">Aktivovat dvoufázové ověření</h2>
+        <p class="text-slate-600 mb-6">
             1. Stáhněte si aplikaci <strong>Google Authenticator</strong> nebo <strong>Authy</strong> do svého mobilu.<br>
             2. Naskenujte níže uvedený QR kód.<br>
             3. Zadejte vygenerovaný 6místný kód pro potvrzení aktivace.
@@ -37,8 +40,8 @@
                 <img th:src="'data:image/png;base64,' + ${qrCode}" alt="QR Kód pro 2FA" class="w-48 h-48">
             </div>
             <div>
-                <span class="text-xs uppercase font-semibold text-gray-400 tracking-wider">Ruční přepis klíče:</span>
-                <div class="font-mono text-lg font-bold text-blue-600 bg-blue-50 px-3 py-2 rounded mt-1 select-all" th:text="${secretKey}">
+                <span class="text-xs uppercase font-semibold text-slate-400 tracking-wider">Ruční přepis klíče:</span>
+                <div class="font-mono text-lg font-bold text-blue-600 bg-blue-50 px-3 py-2 rounded-xl mt-1 select-all" th:text="${secretKey}">
                     ABCD EFGH IJKL MNOP
                 </div>
             </div>
@@ -46,15 +49,15 @@
 
         <form th:action="@{/settings/mfa/enable}" method="post" class="flex gap-4 max-w-md">
             <input type="text" name="code" placeholder="123456" maxlength="6" required
-                   class="px-4 py-2 border rounded-lg w-full text-center font-mono text-xl tracking-widest focus:ring-2 focus:ring-blue-500 outline-none">
-            <button type="submit" class="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition">
+                   class="px-4 py-2.5 border border-slate-300 rounded-xl w-full text-center font-mono text-xl tracking-widest focus:ring-2 focus:ring-blue-500 outline-none">
+            <button type="submit" class="btn-primary px-6 py-2.5 text-sm">
                 Aktivovat
             </button>
         </form>
     </div>
 
     <!-- STAV B: 2FA je aktivní (Možnost deaktivace) -->
-    <div th:if="${user.mfaEnabled}" class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+    <div th:if="${user.mfaEnabled}" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
         <div class="flex items-center text-green-600 font-semibold text-lg mb-2">
             <i class="fa-solid fa-circle-check mr-2"></i> Dvoufázové ověření je AKTIVNÍ
         </div>
@@ -63,13 +66,15 @@
         <h3 class="font-medium text-gray-800 mb-2">Chcete 2FA vypnout?</h3>
         <form th:action="@{/settings/mfa/disable}" method="post" class="flex gap-4 max-w-md">
             <input type="text" name="code" placeholder="123456" maxlength="6" required
-                   class="px-4 py-2 border rounded-lg w-full text-center font-mono text-xl tracking-widest focus:ring-2 focus:ring-red-500 outline-none">
-            <button type="submit" class="px-6 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition">
+                   class="px-4 py-2.5 border border-slate-300 rounded-xl w-full text-center font-mono text-xl tracking-widest focus:ring-2 focus:ring-red-500 outline-none">
+            <button type="submit" class="px-6 py-2.5 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition text-sm">
                 Deaktivovat
             </button>
         </form>
     </div>
 </div>
+</main>
 
+<div th:replace="~{fragments/footer :: main-footer}"></div>
 </body>
 </html>

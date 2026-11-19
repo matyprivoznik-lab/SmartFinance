@@ -5,14 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>mujDokladomat - Adresář kontaktů</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <th:block th:replace="~{fragments/assets :: head}"></th:block>
 </head>
-<body class="min-h-screen flex flex-col justify-between bg-slate-100">
+<body class="min-h-screen flex flex-col justify-between">
 
 <div th:replace="~{fragments/header :: main-header}"></div>
 
 <main class="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-10 flex-1 w-full space-y-6 sm:space-y-8">
-    <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Seznam zákazníků</h1>
+    <h1 class="text-2xl font-black text-slate-900">Seznam zákazníků</h1>
 
     <!-- Formulář pro přidání nového kontaktu -->
     <div class="app-card p-5 sm:p-6 bg-white">
